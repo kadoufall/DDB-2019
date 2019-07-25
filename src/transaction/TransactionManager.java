@@ -1,5 +1,8 @@
 package transaction;
 
+import transaction.exceptions.InvalidTransactionException;
+import transaction.exceptions.TransactionAbortedException;
+
 import java.rmi.*;
 
 /**
@@ -11,17 +14,27 @@ import java.rmi.*;
  */
 
 public interface TransactionManager extends Remote {
+    /**
+     * The RMI name a TransactionManager binds to.
+     */
+    public static final String RMIName = "TM";
 
-    public boolean dieNow()
-            throws RemoteException;
+    public int start() throws RemoteException;
+
+    public boolean commit(int xid)
+            throws RemoteException,
+            InvalidTransactionException,
+            TransactionAbortedException;
+
+    public void abort(int xid)
+            throws RemoteException,
+            InvalidTransactionException;
+
+    public boolean dieNow() throws RemoteException;
 
     public void ping() throws RemoteException;
 
     public void enlist(int xid, ResourceManager rm) throws RemoteException;
 
 
-    /**
-     * The RMI name a TransactionManager binds to.
-     */
-    public static final String RMIName = "TM";
 }

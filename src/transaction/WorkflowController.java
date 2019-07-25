@@ -1,14 +1,16 @@
 package transaction;
 
+import transaction.exceptions.InvalidTransactionException;
+import transaction.exceptions.TransactionAbortedException;
+
 import java.rmi.*;
-import java.util.*;
 
 /**
  * Interface for the Workflow Controller of the Distributed Travel
  * Reservation System.
  * <p>
  * Failure reporting is done using two pieces, exceptions and boolean
- * return values.  Exceptions are used for systemy things - like
+ * return values.  Exceptions are used for system things - like
  * transactions that were forced to abort, or don't exist.  Return
  * values are used for operations that would affect the consistency of
  * the database, like the deletion of more cars than there are.
@@ -28,6 +30,11 @@ import java.util.*;
  */
 
 public interface WorkflowController extends Remote {
+    /**
+     * The RMI name a WorkflowController binds to.
+     */
+    public static final String RMIName = "WC";
+
 
     //////////
     // TRANSACTION INTERFACE
@@ -39,8 +46,7 @@ public interface WorkflowController extends Remote {
      * @return A unique transaction ID > 0.  Return <=0 if server is not accepting new transactions.
      * @throws RemoteException on communications failure.
      */
-    public int start()
-            throws RemoteException;
+    public int start() throws RemoteException;
 
     /**
      * Commit transaction.
@@ -126,7 +132,7 @@ public interface WorkflowController extends Remote {
 
     /**
      * Delete rooms from a location.
-     * This subtracts from both the toal and the available room count
+     * This subtracts from both the total and the available room count
      * (rooms not allocated to a customer).  It should fail if it
      * would make the count of available rooms negative.
      *
@@ -322,8 +328,7 @@ public interface WorkflowController extends Remote {
      *
      * @return true on success, false on failure. (some component not up yet...)
      */
-    public boolean reconnect()
-            throws RemoteException;
+    public boolean reconnect() throws RemoteException;
 
     /**
      * Kill the component immediately.  Used to simulate a system
@@ -334,8 +339,7 @@ public interface WorkflowController extends Remote {
      * @param who which component to kill; must be "TM", "RMFlights", "RMRooms", "RMCars", "RMCustomers", "WC", or "ALL" (which kills all 6 in that order).
      * @return true on success, false on failure.
      */
-    public boolean dieNow(String who)
-            throws RemoteException;
+    public boolean dieNow(String who) throws RemoteException;
 
     /**
      * Sets a flag so that the RM fails after the next enlist()
@@ -348,8 +352,7 @@ public interface WorkflowController extends Remote {
      * @param who which RM to kill; must be "RMFlights", "RMRooms", "RMCars", or "RMCustomers".
      * @return true on success, false on failure.
      */
-    public boolean dieRMAfterEnlist(String who)
-            throws RemoteException;
+    public boolean dieRMAfterEnlist(String who) throws RemoteException;
 
     /**
      * Sets a flag so that the RM fails when it next tries to prepare,
@@ -360,8 +363,7 @@ public interface WorkflowController extends Remote {
      * @param who which RM to kill; must be "RMFlights", "RMRooms", "RMCars", or "RMCustomers".
      * @return true on success, false on failure.
      */
-    public boolean dieRMBeforePrepare(String who)
-            throws RemoteException;
+    public boolean dieRMBeforePrepare(String who) throws RemoteException;
 
     /**
      * Sets a flag so that the RM fails when it next tries to prepare:
@@ -373,8 +375,7 @@ public interface WorkflowController extends Remote {
      * @param who which RM to kill; must be "RMFlights", "RMRooms", "RMCars", or "RMCustomers".
      * @return true on success, false on failure.
      */
-    public boolean dieRMAfterPrepare(String who)
-            throws RemoteException;
+    public boolean dieRMAfterPrepare(String who) throws RemoteException;
 
     /**
      * Sets a flag so that the TM fails after it has received
@@ -385,8 +386,7 @@ public interface WorkflowController extends Remote {
      *
      * @return true on success, false on failure.
      */
-    public boolean dieTMBeforeCommit()
-            throws RemoteException;
+    public boolean dieTMBeforeCommit() throws RemoteException;
 
     /**
      * Sets a flag so that the TM fails right after it logs
@@ -396,8 +396,7 @@ public interface WorkflowController extends Remote {
      *
      * @return true on success, false on failure.
      */
-    public boolean dieTMAfterCommit()
-            throws RemoteException;
+    public boolean dieTMAfterCommit() throws RemoteException;
 
     /**
      * Sets a flag so that the RM fails when it is told by the TM to
@@ -409,8 +408,7 @@ public interface WorkflowController extends Remote {
      * @param who which RM to kill; must be "RMFlights", "RMRooms", "RMCars", or "RMCustomers".
      * @return true on success, false on failure.
      */
-    public boolean dieRMBeforeCommit(String who)
-            throws RemoteException;
+    public boolean dieRMBeforeCommit(String who) throws RemoteException;
 
     /**
      * Sets a flag so that the RM fails when it is told by the TM to
@@ -422,12 +420,6 @@ public interface WorkflowController extends Remote {
      * @param who which RM to kill; must be "RMFlights", "RMRooms", "RMCars", or "RMCustomers".
      * @return true on success, false on failure.
      */
-    public boolean dieRMBeforeAbort(String who)
-            throws RemoteException;
+    public boolean dieRMBeforeAbort(String who) throws RemoteException;
 
-
-    /**
-     * The RMI name a WorkflowController binds to.
-     */
-    public static final String RMIName = "WC";
 }

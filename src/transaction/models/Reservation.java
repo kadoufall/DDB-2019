@@ -4,7 +4,9 @@
  * TODO To change the template for this generated file go to
  * Window - Preferences - Java - Code Style - Code Templates
  */
-package transaction;
+package transaction.models;
+
+import transaction.exceptions.InvalidIndexException;
 
 import java.io.Serializable;
 
@@ -18,18 +20,13 @@ public class Reservation implements ResourceItem, Serializable {
     public static final String INDEX_CUSTNAME = "custName";
 
     public static final int RESERVATION_TYPE_FLIGHT = 1;
-
     public static final int RESERVATION_TYPE_HOTEL = 2;
-
     public static final int RESERVATION_TYPE_CAR = 3;
 
-    protected String custName;
-
-    protected int resvType;
-
-    protected String resvKey;
-
-    protected boolean isdeleted = false;
+    private String custName;
+    private int resvType;
+    private String resvKey;
+    private boolean isdeleted = false;
 
     public Reservation(String custName, int resvType, String resvKey) {
         this.custName = custName;

@@ -1,5 +1,8 @@
 package transaction;
 
+import transaction.exceptions.InvalidTransactionException;
+import transaction.exceptions.TransactionAbortedException;
+
 import java.rmi.*;
 
 /**
@@ -12,7 +15,37 @@ public class TransactionManagerImpl
         extends java.rmi.server.UnicastRemoteObject
         implements TransactionManager {
 
-    public static void main(String args[]) {
+    public TransactionManagerImpl() throws RemoteException {
+    }
+
+    @Override
+    public int start() throws RemoteException {
+        return 0;
+    }
+
+    @Override
+    public boolean commit(int xid) throws RemoteException, InvalidTransactionException, TransactionAbortedException {
+        return false;
+    }
+
+    @Override
+    public void abort(int xid) throws RemoteException, InvalidTransactionException {
+
+    }
+
+    public boolean dieNow() throws RemoteException {
+        System.exit(1);
+        return true; // We won't ever get here since we exited above;
+                    // but we still need it to please the compiler.
+    }
+
+    public void ping() throws RemoteException {
+    }
+
+    public void enlist(int xid, ResourceManager rm) throws RemoteException {
+    }
+
+    public static void main(String[] args) {
         System.setSecurityManager(new RMISecurityManager());
 
         String rmiPort = System.getProperty("rmiPort");
@@ -25,6 +58,11 @@ public class TransactionManagerImpl
         try {
             TransactionManagerImpl obj = new TransactionManagerImpl();
             Naming.rebind(rmiPort + TransactionManager.RMIName, obj);
+
+
+
+
+
             System.out.println("TM bound");
         } catch (Exception e) {
             System.err.println("TM not bound:" + e);
@@ -32,20 +70,6 @@ public class TransactionManagerImpl
         }
     }
 
-    public void ping() throws RemoteException {
-    }
 
-    public void enlist(int xid, ResourceManager rm) throws RemoteException {
-    }
-
-    public TransactionManagerImpl() throws RemoteException {
-    }
-
-    public boolean dieNow()
-            throws RemoteException {
-        System.exit(1);
-        return true; // We won't ever get here since we exited above;
-        // but we still need it to please the compiler.
-    }
 
 }

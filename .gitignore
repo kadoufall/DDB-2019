@@ -484,3 +484,5 @@ GitHub.sublime-settings
 
 .idea/
 ddb.iml
+
+/bin/

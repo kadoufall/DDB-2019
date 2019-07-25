@@ -35,8 +35,7 @@ public class RMManagerCars {
         String rmiPort = prop.getProperty("rm." + rmiName + ".port");
 
         try {
-            _rmiRegistry = LocateRegistry.createRegistry(Integer
-                    .parseInt(rmiPort));
+            _rmiRegistry = LocateRegistry.createRegistry(Integer.parseInt(rmiPort));
         } catch (RemoteException e2) {
             e2.printStackTrace();
             return;
@@ -47,9 +46,8 @@ public class RMManagerCars {
             System.exit(1);
         }
 
-        ResourceManagerImpl obj = null;
         try {
-            obj = new ResourceManagerImpl(rmiName);
+            ResourceManager obj = new ResourceManagerImpl(rmiName);
             _rmiRegistry.bind(rmiName, obj);
             System.out.println(rmiName + " bound");
         } catch (Exception e) {

@@ -4,7 +4,7 @@
  * TODO To change the template for this generated file go to
  * Window - Preferences - Java - Code Style - Code Templates
  */
-package transaction;
+package transaction.exceptions;
 
 /**
  * @author RAdmin
@@ -14,6 +14,6 @@ package transaction;
  */
 public class InvalidIndexException extends Exception {
     public InvalidIndexException(String indexName) {
-        super("invalid index: " + indexName);
+        super("Invalid index: " + indexName);
     }
 }

@@ -47,7 +47,7 @@ public class RMManagerHotels {
         }
 
         try {
-            ResourceManagerImpl obj = new ResourceManagerImpl(rmiName);
+            ResourceManager obj = new ResourceManagerImpl(rmiName);
             _rmiRegistry.bind(rmiName, obj);
             System.out.println(rmiName + " bound");
         } catch (Exception e) {
