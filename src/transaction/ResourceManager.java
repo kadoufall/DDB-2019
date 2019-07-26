@@ -31,8 +31,7 @@ public interface ResourceManager extends Remote {
 
     public Set getTransactions() throws RemoteException;
 
-    public Collection getUpdatedRows(int xid, String tablename)
-            throws RemoteException;
+    public Collection getUpdatedRows(int xid, String tablename) throws RemoteException;
 
     public Collection getUpdatedRows(String tablename) throws RemoteException;
 
@@ -47,12 +46,10 @@ public interface ResourceManager extends Remote {
     public String getID() throws RemoteException;
 
     public Collection query(int xid, String tablename)
-            throws DeadlockException, InvalidTransactionException,
-            RemoteException;
+            throws DeadlockException, InvalidTransactionException, RemoteException;
 
     public ResourceItem query(int xid, String tablename, Object key)
-            throws DeadlockException, InvalidTransactionException,
-            RemoteException;
+            throws DeadlockException, InvalidTransactionException, RemoteException;
 
     public Collection query(int xid, String tablename, String indexName,
                             Object indexVal) throws DeadlockException,
@@ -63,23 +60,18 @@ public interface ResourceManager extends Remote {
             InvalidTransactionException, RemoteException;
 
     public boolean insert(int xid, String tablename, ResourceItem newItem)
-            throws DeadlockException, InvalidTransactionException,
-            RemoteException;
+            throws DeadlockException, InvalidTransactionException, RemoteException;
 
     public boolean delete(int xid, String tablename, Object key)
-            throws DeadlockException, InvalidTransactionException,
-            RemoteException;
+            throws DeadlockException, InvalidTransactionException, RemoteException;
 
     public int delete(int xid, String tablename, String indexName,
                       Object indexVal) throws DeadlockException,
             InvalidTransactionException, InvalidIndexException, RemoteException;
 
-    public boolean prepare(int xid) throws InvalidTransactionException,
-            RemoteException;
+    public boolean prepare(int xid) throws InvalidTransactionException, RemoteException;
 
-    public void commit(int xid) throws InvalidTransactionException,
-            RemoteException;
+    public void commit(int xid) throws InvalidTransactionException, RemoteException;
 
-    public void abort(int xid) throws InvalidTransactionException,
-            RemoteException;
+    public void abort(int xid) throws InvalidTransactionException, RemoteException;
 }

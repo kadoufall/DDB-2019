@@ -30,6 +30,8 @@ public interface TransactionManager extends Remote {
             throws RemoteException,
             InvalidTransactionException;
 
+    public void setDieTime(String time) throws RemoteException;
+
     public boolean dieNow() throws RemoteException;
 
     public void ping() throws RemoteException;

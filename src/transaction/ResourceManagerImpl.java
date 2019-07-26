@@ -31,20 +31,23 @@ import transaction.models.ResourceItem;
  */
 
 public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject implements ResourceManager {
-    protected final static String TRANSACTION_LOG_FILENAME = "transactions.log";
+    private final static String TRANSACTION_LOG_FILENAME = "transactions.log";
 
-    protected LockManager lm = new LockManager();
+    private TransactionManager tm = null;
 
-    protected TransactionManager tm = null;
-
-    protected Hashtable tables = new Hashtable();
+    private LockManager lm = new LockManager();
 
     // RMs
-    protected HashSet xids = new HashSet();     // all transactions
+    private String myRMIName = null; // Used to distinguish this RM from other
 
-    protected String myRMIName = null; // Used to distinguish this RM from other
+    private HashSet xids = new HashSet();     // all transactions
 
-    protected String dieTime;
+    // xid -> xidtables, xidtables: tableName -> RMTable
+    // RMTable, each RMTable is related to a data table,
+    // and each line is a contains entries with a query, update, insert or delete
+    private Hashtable tables = new Hashtable();
+
+    private String dieTime;
 
     //  test usage
     public ResourceManagerImpl() throws RemoteException {
@@ -60,6 +63,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
             try {
                 Thread.sleep(500);
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
 
@@ -154,9 +158,12 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
             if (datas[i].isDirectory()) {
                 continue;
             }
+            //TODO
             if (datas[i].getName().equals(TRANSACTION_LOG_FILENAME)) {
                 continue;
             }
+
+            // get the four main tables: Flight, Car, Customer, Hotel
             getTable(datas[i].getName());
         }
 
@@ -200,7 +207,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
             tm = (TransactionManager) Naming.lookup(rmiPort + TransactionManager.RMIName);
             System.out.println(myRMIName + "'s xids is Empty ? " + xids.isEmpty());
             for (Iterator iter = xids.iterator(); iter.hasNext(); ) {
-                int xid = ((Integer) iter.next()).intValue();
+                int xid = (Integer) iter.next();
                 System.out.println(myRMIName + " Re-enlist to TM with xid" + xid);
                 tm.enlist(xid, this);
                 if (dieTime.equals("AfterEnlist"))
@@ -263,7 +270,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
     }
 
     protected RMTable getTable(int xid, String tablename) {
-        Hashtable xidtables = null;
+        Hashtable xidtables;
         synchronized (tables) {
             xidtables = (Hashtable) tables.get(xid);
             if (xidtables == null) {
@@ -310,13 +317,14 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
                 if (oin != null)
                     oin.close();
             } catch (IOException e1) {
+                e1.printStackTrace();
             }
         }
     }
 
     protected boolean storeTransactionLogs(HashSet xids) {
         File xidLog = new File("data/transactions.log");
-        xidLog.getParentFile().mkdirs();
+//        xidLog.getParentFile().mkdirs();
         xidLog.getParentFile().mkdirs();
         ObjectOutputStream oout = null;
         try {
@@ -606,15 +614,15 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
             synchronized (xidtables) {
                 for (Iterator iter = xidtables.entrySet().iterator(); iter.hasNext(); ) {
                     Map.Entry entry = (Map.Entry) iter.next();
-                    RMTable xtable = (RMTable) entry.getValue();
-                    RMTable table = getTable(xtable.getTablename());
+                    RMTable xtable = (RMTable) entry.getValue();            // in memory
+                    RMTable table = getTable(xtable.getTablename());        // load from file, flight, car...
                     for (Iterator iter2 = xtable.keySet().iterator(); iter2.hasNext(); ) {
                         Object key = iter2.next();
                         ResourceItem item = xtable.get(key);
                         if (item.isDeleted())
                             table.remove(item);
                         else
-                            table.put(item);
+                            table.put(item);            // merge memory data into file
                     }
                     if (!storeTable(table, new File("data/" + entry.getKey())))
                         throw new RemoteException("Can't write table to disk");

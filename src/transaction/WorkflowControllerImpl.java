@@ -82,9 +82,7 @@ public class WorkflowControllerImpl
         return ret;
     }
 
-    public void abort(int xid)
-            throws RemoteException,
-            InvalidTransactionException {
+    public void abort(int xid) throws RemoteException, InvalidTransactionException {
         if (!this.transactions.contains(xid)) {
             throw new InvalidTransactionException(xid, "abort");
         }
@@ -860,43 +858,67 @@ public class WorkflowControllerImpl
         return true;
     }
 
-    public boolean dieRMAfterEnlist(String who)
-            throws RemoteException {
+    public boolean dieRMIWhen(String who, String time) {
+        ResourceManager resourceManager = null;
+
+        switch (who) {
+            case ResourceManager.RMINameFlights:
+                resourceManager = this.rmFlights;
+                break;
+            case ResourceManager.RMINameRooms:
+                resourceManager = this.rmRooms;
+                break;
+            case ResourceManager.RMINameCars:
+                resourceManager = this.rmCars;
+                break;
+            case ResourceManager.RMINameCustomers:
+                resourceManager = this.rmCustomers;
+                break;
+            default:
+                System.err.println("Error error in WC dieRMIWhen(): Invalid RMIName");
+                break;
+        }
+
+        try {
+            resourceManager.setDieTime(time);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
         return true;
     }
 
-    public boolean dieRMBeforePrepare(String who)
-            throws RemoteException {
+    public boolean dieRMAfterEnlist(String who) throws RemoteException {
+        return this.dieRMIWhen(who, "AfterEnlist");
+    }
+
+    public boolean dieRMBeforePrepare(String who) throws RemoteException {
+        return this.dieRMIWhen(who, "BeforePrepare");
+    }
+
+    public boolean dieRMAfterPrepare(String who) throws RemoteException {
+        return this.dieRMIWhen(who, "AfterPrepare");
+    }
+
+    public boolean dieTMBeforeCommit() throws RemoteException {
+        this.tm.setDieTime("BeforeCommit");
         return true;
     }
 
-    public boolean dieRMAfterPrepare(String who)
-            throws RemoteException {
+    public boolean dieTMAfterCommit() throws RemoteException {
+        this.tm.setDieTime("AfterCommit");
         return true;
     }
 
-    public boolean dieTMBeforeCommit()
-            throws RemoteException {
-        return true;
+    public boolean dieRMBeforeCommit(String who) throws RemoteException {
+        return this.dieRMIWhen(who, "BeforeCommit");
     }
 
-    public boolean dieTMAfterCommit()
-            throws RemoteException {
-        return true;
+    public boolean dieRMBeforeAbort(String who) throws RemoteException {
+        return this.dieRMIWhen(who, "BeforeAbort");
     }
 
-    public boolean dieRMBeforeCommit(String who)
-            throws RemoteException {
-        return true;
-    }
-
-    public boolean dieRMBeforeAbort(String who)
-            throws RemoteException {
-        return true;
-    }
-
-    public static void main(String args[]) {
-        System.setSecurityManager(new RMISecurityManager());
+    public static void main(String[] args) {
+        System.setSecurityManager(new SecurityManager());
 
         String rmiPort = System.getProperty("rmiPort");
         if (rmiPort == null) {

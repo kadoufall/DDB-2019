@@ -57,7 +57,7 @@ public class RMTable implements Serializable {
     public void relockAll() throws DeadlockException {
         for (Iterator iter = locks.entrySet().iterator(); iter.hasNext(); ) {
             Map.Entry entry = (Map.Entry) iter.next();
-            if (!lm.lock(xid, tablename + ":" + entry.getKey().toString(), ((Integer) entry.getValue()).intValue()))
+            if (!lm.lock(xid, tablename + ":" + entry.getKey().toString(), (Integer) entry.getValue()))
                 throw new RuntimeException();
         }
     }
@@ -65,7 +65,7 @@ public class RMTable implements Serializable {
     public void lock(Object key, int lockType) throws DeadlockException {
         if (!lm.lock(xid, tablename + ":" + key.toString(), lockType))
             throw new RuntimeException();
-        locks.put(key, new Integer(lockType));
+        locks.put(key, lockType);
     }
 
     public ResourceItem get(Object key) {
