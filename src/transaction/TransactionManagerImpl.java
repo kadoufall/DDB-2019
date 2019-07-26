@@ -41,7 +41,7 @@ public class TransactionManagerImpl
         xids = new HashSet<>();
 
         // recover after TM restart
-        this.recover();
+//        this.recover();
 
     }
 

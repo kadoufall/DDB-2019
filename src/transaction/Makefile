@@ -11,8 +11,8 @@ server : ResourceManager.class \
          WorkflowController.class \
          WorkflowControllerImpl.class \
          WorkflowControllerImpl_Stub.class \
-         InvalidTransactionException.class \
-         TransactionAbortedException.class
+         ./exceptions/InvalidTransactionException.class \
+         ./exceptions/TransactionAbortedException.class
 
 client: Client.class
 

@@ -189,14 +189,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
     }
 
     public boolean reconnect() {
-        Properties prop = new Properties();
-        try {
-            prop.load(new FileInputStream("conf/ddb.conf"));
-        } catch (Exception e1) {
-            e1.printStackTrace();
-            return false;
-        }
-        String rmiPort = prop.getProperty("tm.port");
+        String rmiPort = System.getProperty("rmiPort");
         if (rmiPort == null) {
             rmiPort = "";
         } else if (!rmiPort.equals("")) {
@@ -664,6 +657,32 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
 
         synchronized (xids) {
             xids.remove(xid);
+        }
+    }
+
+    public static void main(String[] args) {
+        System.setSecurityManager(new SecurityManager());
+
+        String rmiName = System.getProperty("rmiName");
+        if (rmiName == null || rmiName.equals("")) {
+            System.err.println("No RMI name given");
+            System.exit(1);
+        }
+
+        String rmiPort = System.getProperty("rmiPort");
+        if (rmiPort == null) {
+            rmiPort = "";
+        } else if (!rmiPort.equals("")) {
+            rmiPort = "//:" + rmiPort + "/";
+        }
+
+        try {
+            ResourceManagerImpl obj = new ResourceManagerImpl(rmiName);
+            Naming.rebind(rmiPort + rmiName, obj);
+            System.out.println(rmiName + " bound");
+        } catch (Exception e) {
+            System.err.println(rmiName + " not bound:" + e);
+            System.exit(1);
         }
     }
 

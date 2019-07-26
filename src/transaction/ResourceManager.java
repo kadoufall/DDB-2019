@@ -51,13 +51,11 @@ public interface ResourceManager extends Remote {
     public ResourceItem query(int xid, String tablename, Object key)
             throws DeadlockException, InvalidTransactionException, RemoteException;
 
-    public Collection query(int xid, String tablename, String indexName,
-                            Object indexVal) throws DeadlockException,
-            InvalidTransactionException, InvalidIndexException, RemoteException;
+    public Collection query(int xid, String tablename, String indexName, Object indexVal)
+            throws DeadlockException, InvalidTransactionException, InvalidIndexException, RemoteException;
 
-    public boolean update(int xid, String tablename, Object key,
-                          ResourceItem newItem) throws DeadlockException,
-            InvalidTransactionException, RemoteException;
+    public boolean update(int xid, String tablename, Object key, ResourceItem newItem)
+            throws DeadlockException, InvalidTransactionException, RemoteException;
 
     public boolean insert(int xid, String tablename, ResourceItem newItem)
             throws DeadlockException, InvalidTransactionException, RemoteException;
@@ -65,9 +63,8 @@ public interface ResourceManager extends Remote {
     public boolean delete(int xid, String tablename, Object key)
             throws DeadlockException, InvalidTransactionException, RemoteException;
 
-    public int delete(int xid, String tablename, String indexName,
-                      Object indexVal) throws DeadlockException,
-            InvalidTransactionException, InvalidIndexException, RemoteException;
+    public int delete(int xid, String tablename, String indexName, Object indexVal)
+            throws DeadlockException, InvalidTransactionException, InvalidIndexException, RemoteException;
 
     public boolean prepare(int xid) throws InvalidTransactionException, RemoteException;
 

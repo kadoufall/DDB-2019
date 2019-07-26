@@ -10,15 +10,8 @@ import java.util.Properties;
 
 public class Client {
 
-    public static void main(String args[]) {
-        Properties prop = new Properties();
-        try {
-            prop.load(new FileInputStream("conf/ddb.conf"));
-        } catch (Exception e1) {
-            e1.printStackTrace();
-            return;
-        }
-        String rmiPort = prop.getProperty("wc.port");
+    public static void main(String[] args) {
+        String rmiPort = System.getProperty("rmiPort");
         if (rmiPort == null) {
             rmiPort = "";
         } else if (!rmiPort.equals("")) {
