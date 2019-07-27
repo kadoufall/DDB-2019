@@ -64,7 +64,7 @@ public class Car implements ResourceItem, Serializable {
         }
 
         this.numAvail -= 1;
-        return false;
+        return true;
     }
 
     @Override
@@ -84,7 +84,7 @@ public class Car implements ResourceItem, Serializable {
 
     @Override
     public Object getKey() {
-        return null;
+        return this.location;
     }
 
     @Override

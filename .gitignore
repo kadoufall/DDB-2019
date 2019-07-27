@@ -486,3 +486,5 @@ GitHub.sublime-settings
 ddb.iml
 
 /bin/
+/src/test.part2/results/
+/src/test.part2/data/

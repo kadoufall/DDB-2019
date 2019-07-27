@@ -36,8 +36,9 @@ FdieRMBeforeCommit
 因此，在TM的commit时，正常执行的RM不受影响，挂掉的RM记录下来。如果所有的RM都正常，则正常处理，
 删除xid的信息。否则，在enlist时，对新连接的RM进行判断，然后再完成commit的操作。
   
-FdieRMBeforePrepare
-
+docker exec -it ubuntu bash
+cd home/projects/DDB-Project2019/OptionSourceCode/src/transaction
+make runrmflights & make runrmrooms & make runrmcars & make runrmcustomers
 
 
 

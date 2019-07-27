@@ -146,8 +146,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
             if (datas[i].isDirectory()) {
                 continue;
             }
-            //TODO
-            if (datas[i].getName().equals(RM_TRANSACTION_LOG_FILENAME)) {
+            if (datas[i].getName().endsWith(".log")) {
                 continue;
             }
 

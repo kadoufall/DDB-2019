@@ -74,7 +74,7 @@ public class Flight implements ResourceItem, Serializable {
 
     @Override
     public Object getKey() {
-        return null;
+        return this.flightNum;
     }
 
     @Override

@@ -84,7 +84,7 @@ public class Hotel implements ResourceItem, Serializable {
 
     @Override
     public Object getKey() {
-        return null;
+        return this.location;
     }
 
     @Override

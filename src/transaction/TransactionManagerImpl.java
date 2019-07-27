@@ -20,7 +20,7 @@ import java.util.Set;
 public class TransactionManagerImpl
         extends java.rmi.server.UnicastRemoteObject
         implements TransactionManager {
-    private final static String TM_TRANSACTION_NUM_LOG_FILENAME = "wc_xidNum.log";
+    private final static String TM_TRANSACTION_NUM_LOG_FILENAME = "data/wc_xidNum.log";
     private final static String TM_TRANSACTION_LOG_FILENAME = "data/wc_xids.log";
     private final static String TM_TRANSACTION_RMs_LOG_FILENAME = "data/wc_xidRMs.log";
 
@@ -101,13 +101,18 @@ public class TransactionManagerImpl
     public int start() throws RemoteException {
 
         synchronized (this.xidNum) {
-            int curXid = this.xidNum;
-            this.xidNum++;
+            Integer curXid = this.xidNum++;
+
+            this.storeToFile(TM_TRANSACTION_NUM_LOG_FILENAME, this.xidNum);
 
             synchronized (this.xids) {
                 this.xids.put(curXid, TransactionStatus.NEW);
+                this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
             }
 
+            synchronized (this.xidRMs) {
+                this.xidRMs.put(curXid, new HashSet<>());
+            }
 
             return curXid;
         }
@@ -120,6 +125,8 @@ public class TransactionManagerImpl
             throw new InvalidTransactionException(xid, "TM commit");
         }
 
+        System.out.println(xid);
+
         Set<ResourceManager> resourceManagers = this.xidRMs.get(xid);
         for (ResourceManager resourceManager : resourceManagers) {
             try {
@@ -129,7 +136,7 @@ public class TransactionManagerImpl
                     throw new TransactionAbortedException(xid, "commit prepare");
                 }
             } catch (Exception e) {
-                // occur when RM die、AfterPrepare、BeforePrepare
+                // occur when RM die, AfterPrepare, BeforePrepare
                 e.printStackTrace();
                 this.abort(xid);
                 throw new TransactionAbortedException(xid, "commit prepare");
