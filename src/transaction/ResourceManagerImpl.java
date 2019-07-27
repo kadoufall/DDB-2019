@@ -1,28 +1,16 @@
 package transaction;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.rmi.Naming;
-import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-
 import lockmgr.DeadlockException;
 import lockmgr.LockManager;
 import transaction.exceptions.InvalidIndexException;
 import transaction.exceptions.InvalidTransactionException;
 import transaction.exceptions.TransactionManagerUnaccessibleException;
 import transaction.models.ResourceItem;
+
+import java.io.*;
+import java.rmi.Naming;
+import java.rmi.RemoteException;
+import java.util.*;
 
 /**
  * Resource Manager for the Distributed Travel Reservation System.
@@ -31,7 +19,7 @@ import transaction.models.ResourceItem;
  */
 
 public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject implements ResourceManager {
-    private final static String TRANSACTION_LOG_FILENAME = "transactions.log";
+    private final static String RM_TRANSACTION_LOG_FILENAME = "transactions.log";
 
     private TransactionManager tm = null;
 
@@ -159,7 +147,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
                 continue;
             }
             //TODO
-            if (datas[i].getName().equals(TRANSACTION_LOG_FILENAME)) {
+            if (datas[i].getName().equals(RM_TRANSACTION_LOG_FILENAME)) {
                 continue;
             }
 

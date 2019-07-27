@@ -6,8 +6,8 @@ import transaction.exceptions.InvalidTransactionException;
 import transaction.exceptions.TransactionAbortedException;
 import transaction.models.*;
 
+import java.io.*;
 import java.rmi.Naming;
-import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.HashSet;
@@ -25,27 +25,24 @@ public class WorkflowControllerImpl
         extends java.rmi.server.UnicastRemoteObject
         implements WorkflowController {
 
-    private int flightcounter, flightprice, carscounter, carsprice, roomscounter, roomsprice;
-    private int xidCounter;
+    private final static String WC_TRANSACTION_LOG_FILENAME = "data/wc_xids.log";
 
-    private ResourceManager rmFlights = null;
-    private ResourceManager rmRooms = null;
-    private ResourceManager rmCars = null;
-    private ResourceManager rmCustomers = null;
-    private TransactionManager tm = null;
-
-    private Set<Integer> transactions = new HashSet<>();
+    private ResourceManager rmFlights;
+    private ResourceManager rmRooms;
+    private ResourceManager rmCars;
+    private ResourceManager rmCustomers;
+    private TransactionManager tm;
+    private Set<Integer> xids;
 
     public WorkflowControllerImpl() throws RemoteException {
-        flightcounter = 0;
-        flightprice = 0;
-        carscounter = 0;
-        carsprice = 0;
-        roomscounter = 0;
-        roomsprice = 0;
-        flightprice = 0;
+        this.rmFlights = null;
+        this.rmRooms = null;
+        this.rmCars = null;
+        this.rmCustomers = null;
+        this.tm = null;
+        this.xids = new HashSet<>();
 
-        xidCounter = 1;
+        this.recover();
 
         while (!reconnect()) {
             // would be better to sleep a while
@@ -55,13 +52,62 @@ public class WorkflowControllerImpl
                 e.printStackTrace();
             }
         }
+
     }
 
+    private void recover() {
+        Set<Integer> cacheXids = loadTransactionLogs();
+
+        if (cacheXids != null) {
+            this.xids = cacheXids;
+        }
+    }
+
+    private Set<Integer> loadTransactionLogs() {
+        File xidLog = new File(WC_TRANSACTION_LOG_FILENAME);
+        ObjectInputStream oin = null;
+        try {
+            oin = new ObjectInputStream(new FileInputStream(xidLog));
+            return (HashSet<Integer>) oin.readObject();
+        } catch (Exception e) {
+            return null;
+        } finally {
+            try {
+                if (oin != null)
+                    oin.close();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+        }
+    }
+
+    private void storeTransactionLogs(Set<Integer> xids) {
+        File xidLog = new File(WC_TRANSACTION_LOG_FILENAME);
+        xidLog.getParentFile().mkdirs();
+        ObjectOutputStream oout = null;
+        try {
+            oout = new ObjectOutputStream(new FileOutputStream(xidLog));
+            oout.writeObject(xids);
+            oout.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (oout != null)
+                    oout.close();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+        }
+    }
 
     // TRANSACTION INTERFACE
     public int start() throws RemoteException {
+        // do not need synchronized, because tm.start() is synchronized
         int xid = tm.start();
-        this.transactions.add(xid);
+        this.xids.add(xid);
+
+        this.storeTransactionLogs(this.xids);
 
         return xid;
     }
@@ -70,24 +116,25 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
-        if (!this.transactions.contains(xid)) {
+        if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "commit");
         }
 
         boolean ret = this.tm.commit(xid);
-        if (ret) {
-            this.transactions.remove(xid);
-        }
+        this.xids.remove(xid);
+        this.storeTransactionLogs(this.xids);
 
         return ret;
     }
 
     public void abort(int xid) throws RemoteException, InvalidTransactionException {
-        if (!this.transactions.contains(xid)) {
+        if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "abort");
         }
 
-        tm.abort(xid);
+        this.tm.abort(xid);
+        this.xids.remove(xid);
+        this.storeTransactionLogs(this.xids);
     }
 
     // ADMINISTRATIVE INTERFACE
@@ -96,7 +143,7 @@ public class WorkflowControllerImpl
             TransactionAbortedException,
             InvalidTransactionException {
         // check input
-        if (!this.transactions.contains(xid)) {
+        if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "addFlight");
         }
         if (flightNum == null || numSeats < 0) {
@@ -145,7 +192,7 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
-        if (!this.transactions.contains(xid)) {
+        if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "deleteFlight");
         }
 
@@ -188,7 +235,7 @@ public class WorkflowControllerImpl
             TransactionAbortedException,
             InvalidTransactionException {
         // check input
-        if (!this.transactions.contains(xid)) {
+        if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "addRooms");
         }
         if (location == null || numRooms < 0) {
@@ -236,7 +283,7 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
-        if (!this.transactions.contains(xid)) {
+        if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "deleteRooms");
         }
 
@@ -271,7 +318,7 @@ public class WorkflowControllerImpl
             TransactionAbortedException,
             InvalidTransactionException {
         // check input
-        if (!this.transactions.contains(xid)) {
+        if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "addCars");
         }
         if (location == null || numCars < 0) {
@@ -319,7 +366,7 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
-        if (!this.transactions.contains(xid)) {
+        if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "deleteCars");
         }
 
@@ -352,7 +399,7 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
-        if (!this.transactions.contains(xid)) {
+        if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "newCustomer");
         }
 
@@ -387,7 +434,7 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
-        if (!this.transactions.contains(xid)) {
+        if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "deleteCustomer");
         }
 
@@ -452,7 +499,7 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
-        if (!this.transactions.contains(xid)) {
+        if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "queryFlight");
         }
 
@@ -477,7 +524,7 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
-        if (!this.transactions.contains(xid)) {
+        if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "queryFlightPrice");
         }
 
@@ -502,7 +549,7 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
-        if (!this.transactions.contains(xid)) {
+        if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "queryRooms");
         }
 
@@ -527,7 +574,7 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
-        if (!this.transactions.contains(xid)) {
+        if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "queryRoomsPrice");
         }
 
@@ -552,7 +599,7 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
-        if (!this.transactions.contains(xid)) {
+        if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "queryCars");
         }
 
@@ -577,7 +624,7 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
-        if (!this.transactions.contains(xid)) {
+        if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "queryCarsPrice");
         }
 
@@ -602,7 +649,7 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
-        if (!this.transactions.contains(xid)) {
+        if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "queryCustomerBill");
         }
 
@@ -656,7 +703,7 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
-        if (!this.transactions.contains(xid)) {
+        if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "reserveFlight");
         }
 
@@ -693,7 +740,7 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
-        if (!this.transactions.contains(xid)) {
+        if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "reserveCar");
         }
 
@@ -730,7 +777,7 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
-        if (!this.transactions.contains(xid)) {
+        if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "reserveRoom");
         }
 

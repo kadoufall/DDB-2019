@@ -36,7 +36,8 @@ public interface TransactionManager extends Remote {
 
     public void ping() throws RemoteException;
 
-    public void enlist(int xid, ResourceManager rm) throws RemoteException;
+    public void enlist(int xid, ResourceManager rm)
+            throws RemoteException, InvalidTransactionException;
 
 
 }

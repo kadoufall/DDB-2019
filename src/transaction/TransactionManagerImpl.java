@@ -2,13 +2,11 @@ package transaction;
 
 import transaction.exceptions.InvalidTransactionException;
 import transaction.exceptions.TransactionAbortedException;
-import transaction.models.ResourceItem;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.rmi.*;
+import java.io.*;
+import java.rmi.Naming;
+import java.rmi.RemoteException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -22,38 +20,41 @@ import java.util.Set;
 public class TransactionManagerImpl
         extends java.rmi.server.UnicastRemoteObject
         implements TransactionManager {
-    private final static String XID_NUM_FILENAME = "xidNum.log";
-    private final static String XIDs_FILENAME = "xidNum.log";
+    private final static String TM_TRANSACTION_NUM_LOG_FILENAME = "wc_xidNum.log";
+    private final static String TM_TRANSACTION_LOG_FILENAME = "data/wc_xids.log";
+    private final static String TM_TRANSACTION_RMs_LOG_FILENAME = "data/wc_xidRMs.log";
 
     private String dieTime;
-
     private Integer xidNum;
-
-    private Set<Integer> xids;
-
+    private Map<Integer, TransactionStatus> xids;
     private Map<Integer, Set<ResourceManager>> xidRMs;
 
-
     public TransactionManagerImpl() throws RemoteException {
-        dieTime = "NoDie";
+        this.dieTime = "NoDie";
+        this.xidNum = 1;
+        this.xids = new HashMap<>();
+        this.xidRMs = new HashMap<>();
 
-        xidNum = 1;
-        xids = new HashSet<>();
-
-        // recover after TM restart
-//        this.recover();
-
+        this.recoverFromFile();
     }
 
     public void setDieTime(String dieTime) {
         this.dieTime = dieTime;
     }
 
-    private void recover() {
-        File dataDir = new File("data");
-        if (!dataDir.exists()) {
-            dataDir.mkdirs();
+    private void recoverFromFile() {
+        // load xidNum from file
+        Object cacheXidNum = this.loadFromFile(TM_TRANSACTION_NUM_LOG_FILENAME);
+        if (cacheXidNum != null) {
+            this.xidNum = (Integer) cacheXidNum;
         }
+
+        // load xids from file
+        Object cacheXids = this.loadFromFile(TM_TRANSACTION_LOG_FILENAME);
+        if (cacheXids != null) {
+            this.xids = (Map<Integer, TransactionStatus>) cacheXids;
+        }
+
 
 
     }
@@ -76,6 +77,26 @@ public class TransactionManagerImpl
         }
     }
 
+    private void storeToFile(String filePath, Object obj) {
+        File file = new File(filePath);
+        file.getParentFile().mkdirs();
+        ObjectOutputStream oout = null;
+        try {
+            oout = new ObjectOutputStream(new FileOutputStream(file));
+            oout.writeObject(obj);
+            oout.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (oout != null)
+                    oout.close();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+        }
+    }
+
     @Override
     public int start() throws RemoteException {
 
@@ -84,7 +105,7 @@ public class TransactionManagerImpl
             this.xidNum++;
 
             synchronized (this.xids) {
-                this.xids.add(curXid);
+                this.xids.put(curXid, TransactionStatus.NEW);
             }
 
 
@@ -95,38 +116,82 @@ public class TransactionManagerImpl
 
     @Override
     public boolean commit(int xid) throws RemoteException, InvalidTransactionException, TransactionAbortedException {
-        if (!this.xids.contains(xid)) {
+        if (!this.xids.containsKey(xid)) {
             throw new InvalidTransactionException(xid, "TM commit");
         }
 
         Set<ResourceManager> resourceManagers = this.xidRMs.get(xid);
-
         for (ResourceManager resourceManager : resourceManagers) {
-            boolean prepared = resourceManager.prepare(xid);
-            if (!prepared) {
+            try {
+                boolean prepared = resourceManager.prepare(xid);
+                if (!prepared) {
+                    this.abort(xid);
+                    throw new TransactionAbortedException(xid, "commit prepare");
+                }
+            } catch (Exception e) {
+                // occur when RM die、AfterPrepare、BeforePrepare
+                e.printStackTrace();
                 this.abort(xid);
-                throw new TransactionAbortedException(xid, "");
+                throw new TransactionAbortedException(xid, "commit prepare");
             }
         }
 
-        for (ResourceManager resourceManager : resourceManagers) {
-            resourceManager.commit(xid);
-        }
-
-        synchronized (this.xidRMs) {
-            this.xidRMs.remove(xid);
-        }
-
         synchronized (this.xids) {
-            this.xids.remove(xid);
+            xids.put(xid, TransactionStatus.PREPARED);
+            this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
         }
 
-        return false;
+        // the TM fails after it has received
+        // "prepared" messages from all RMs, but before it can log "committed"
+        if (this.dieTime.equals("BeforeCommit")) {
+            this.dieNow();
+        }
+
+        // log "committed"
+        synchronized (this.xids) {
+            xids.put(xid, TransactionStatus.COMMITTED);
+            this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
+        }
+
+        // the TM fails right after it logs "committed"
+        if (this.dieTime.equals("AfterCommit")) {
+            this.dieNow();
+        }
+
+        Set<ResourceManager> committedRMs = new HashSet<>();
+        for (ResourceManager resourceManager : resourceManagers) {
+            try {
+                resourceManager.commit(xid);
+                committedRMs.add(resourceManager);
+            } catch (Exception e) {
+                // occur when RM die BeforeCommit
+                // when RM re-enlist, commit xid
+            }
+        }
+
+        if (committedRMs.size() == resourceManagers.size()) {
+            synchronized (this.xidRMs) {
+                this.xidRMs.remove(xid);
+            }
+
+            synchronized (this.xids) {
+                this.xids.remove(xid);
+                this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
+            }
+        } else {
+            // some RMs die
+            synchronized (this.xidRMs) {
+                resourceManagers.removeAll(committedRMs);
+                this.xidRMs.put(xid, resourceManagers);
+            }
+        }
+
+        return true;
     }
 
     @Override
     public void abort(int xid) throws RemoteException, InvalidTransactionException {
-        if (!this.xids.contains(xid)) {
+        if (!this.xids.containsKey(xid)) {
             throw new InvalidTransactionException(xid, "TM abort");
         }
 
@@ -142,6 +207,7 @@ public class TransactionManagerImpl
 
         synchronized (this.xids) {
             this.xids.remove(xid);
+            this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
         }
 
     }
@@ -155,10 +221,41 @@ public class TransactionManagerImpl
     public void ping() throws RemoteException {
     }
 
-    public void enlist(int xid, ResourceManager rm) throws RemoteException {
-//        if (!this.xids.contains(xid)) {
-//
-//        }
+    public void enlist(int xid, ResourceManager rm) throws RemoteException, InvalidTransactionException {
+        if (!this.xids.containsKey(xid)) {
+            rm.abort(xid);
+            return;
+        }
+
+        if (this.xids.get(xid) == TransactionStatus.COMMITTED) {
+            rm.commit(xid);
+            Set<ResourceManager> temp = this.xidRMs.get(xid);
+            ResourceManager find = null;
+            for (ResourceManager r : temp) {
+                if (r.getID().equals(rm.getID())) {
+                    find = r;
+                    break;
+                }
+            }
+
+            if (find != null) {
+                temp.remove(find);
+                synchronized (this.xidRMs) {
+                    if (temp.size() == 0) {
+                        this.xidRMs.remove(xid);
+                    } else {
+                        this.xidRMs.put(xid, temp);
+                    }
+                }
+                synchronized (this.xids) {
+                    if (temp.size() == 0) {
+                        this.xids.remove(xid);
+                        this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
+                    }
+                }
+            }
+            return;
+        }
 
         synchronized (this.xidRMs) {
             Set<ResourceManager> resourceManagers = this.xidRMs.get(xid);
