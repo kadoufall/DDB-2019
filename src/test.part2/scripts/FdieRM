@@ -23,7 +23,7 @@
 1 call reconnect
 1 return true
 1 call commit xid
-1 except transaction.TransactionAbortedException
+1 except transaction.exceptions.TransactionAbortedException
 1 call start
 1 return
 1 call queryFlight xid "347"

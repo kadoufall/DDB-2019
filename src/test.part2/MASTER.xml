@@ -64,25 +64,25 @@
         <!--Does not compute correct bill.-->
     <!--</test>-->
 
-    <test id="Siticmt">
-        query result incorrect after reserveItinerary commits.
-    </test>
+    <!--<test id="Siticmt">-->
+        <!--query result incorrect after reserveItinerary commits.-->
+    <!--</test>-->
 
-    <test id="Sitiabt">
-        query result incorrect after reserveItinerary aborts.
-    </test>
+    <!--<test id="Sitiabt">-->
+        <!--query result incorrect after reserveItinerary aborts.-->
+    <!--</test>-->
 
-    <test id="Sitifail">
-        state is not restored after reserveItinerary fails.
-    </test>
+    <!--<test id="Sitifail">-->
+        <!--state is not restored after reserveItinerary fails.-->
+    <!--</test>-->
 
-    <test id="Saddrd">
-        Cannot query items added earlier in same transaction.
-    </test>
+    <!--<test id="Saddrd">-->
+        <!--Cannot query items added earlier in same transaction.-->
+    <!--</test>-->
 
-    <test id="Sbadxid">
-        Bogus xid does not throw InvalidTransactionException.
-    </test>
+    <!--<test id="Sbadxid">-->
+        <!--Bogus xid does not throw InvalidTransactionException.-->
+    <!--</test>-->
 
 
     <!-- Locking tests -->
@@ -108,11 +108,11 @@
     <!--</test>-->
 
 
-    <!--&lt;!&ndash; Failure tests &ndash;&gt;-->
+    <!-- Failure tests -->
 
-    <!--<test id="FdieAll" fpoints="5">-->
-        <!--After all components fail, previous committed transactions are lost.-->
-    <!--</test>-->
+    <test id="FdieAll" fpoints="5">
+        After all components fail, previous committed transactions are lost.
+    </test>
 
     <!--<test id="FdieRM" fpoints="5">-->
         <!--After RM fails, transaction is not forcibly aborted.-->

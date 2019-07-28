@@ -25,7 +25,7 @@
 1 call reconnect
 1 return true
 1 call commit xid
-1 except transaction.TransactionAbortedException
+1 except transaction.exceptions.TransactionAbortedException
 1 call dieNow "RMFlights"
 1 return true
 1 launch RMFlights

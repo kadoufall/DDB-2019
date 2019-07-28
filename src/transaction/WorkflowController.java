@@ -4,6 +4,7 @@ import transaction.exceptions.InvalidTransactionException;
 import transaction.exceptions.TransactionAbortedException;
 
 import java.rmi.*;
+import java.util.List;
 
 /**
  * Interface for the Workflow Controller of the Distributed Travel
@@ -312,6 +313,23 @@ public interface WorkflowController extends Remote {
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException;
+
+    /**
+     * Reserve an entire itinerary on behalf of this customer.
+     *
+     * @param xid           id of transaction.
+     * @param custName      name of customer.
+     * @param flightNumList list of String flight numbers.
+     * @param location      location of car & hotel, if needed.
+     * @param needCar       whether itinerary includes a car reservation.
+     * @param needRoom      whether itinerary includes a hotel reservation.
+     * @return true on success, false on failure. (Any needed flights/car/room doesn't exist or not available...)
+     * @throws RemoteException             on communications failure.
+     * @throws TransactionAbortedException if transaction was aborted.
+     * @throws InvalidTransactionException if transaction id is invalid.
+     */
+    public boolean reserveItinerary(int xid, String custName, List flightNumList, String location, boolean needCar, boolean needRoom)
+            throws RemoteException, TransactionAbortedException, InvalidTransactionException;
 
     //////////
     // TECHNICAL/TESTING INTERFACE

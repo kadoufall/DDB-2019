@@ -22,7 +22,7 @@
 1 call addCars xid "SFO" 300 60
 1 return true
 2 call queryCarsPrice xid "SFO"
-2 except transaction.TransactionAbortedException
+2 except transaction.exceptions.TransactionAbortedException
 1 call commit xid
 1 return true
 1 call start

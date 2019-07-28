@@ -484,7 +484,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
             dieNow();
 
         RMTable table = getTable(xid, tablename);
-        ResourceItem item = (ResourceItem) table.get(newItem.getKey());
+        ResourceItem item = table.get(newItem.getKey());
         if (item != null && !item.isDeleted()) {
             return false;
         }

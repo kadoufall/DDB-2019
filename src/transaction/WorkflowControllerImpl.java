@@ -9,9 +9,7 @@ import transaction.models.*;
 import java.io.*;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Workflow Controller for the Distributed Travel Reservation System.
@@ -139,9 +137,7 @@ public class WorkflowControllerImpl
 
     // ADMINISTRATIVE INTERFACE
     public boolean addFlight(int xid, String flightNum, int numSeats, int price)
-            throws RemoteException,
-            TransactionAbortedException,
-            InvalidTransactionException {
+            throws RemoteException, TransactionAbortedException, InvalidTransactionException {
         // check input
         if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "addFlight");
@@ -810,6 +806,86 @@ public class WorkflowControllerImpl
         }
     }
 
+    public boolean reserveItinerary(int xid, String custName, List flightNumList, String location, boolean needCar, boolean needRoom)
+            throws RemoteException, TransactionAbortedException, InvalidTransactionException {
+        if (!this.xids.contains(xid)) {
+            throw new InvalidTransactionException(xid, "reserveItinerary");
+        }
+
+        if (custName == null || location == null || flightNumList == null) {
+            return false;
+        }
+
+        try {
+            ResourceItem resourceCustomer = this.rmCustomers.query(xid, this.rmCustomers.getID(), custName);
+            if (resourceCustomer == null) {
+                return false;
+            }
+
+            List<String> flights = new ArrayList<>();
+            for (Object obj : flightNumList) {
+                String flightNum = (String) obj;
+                ResourceItem resourceFlight = this.rmFlights.query(xid, this.rmFlights.getID(), flightNum);
+                if (resourceFlight == null) {
+                    return false;
+                }
+
+                Flight flight = (Flight) resourceFlight;
+                if (flight.getNumAvail() < 1) {
+                    return false;
+                }
+                flights.add(flightNum);
+            }
+
+            if (needCar) {
+                ResourceItem resourceCar = this.rmCars.query(xid, this.rmCars.getID(), location);
+                if (resourceCar == null) {
+                    return false;
+                }
+
+                Car car = (Car) resourceCar;
+                if (car.getNumAvail() < 1) {
+                    return false;
+                }
+            }
+
+            if (needRoom) {
+                ResourceItem resourceRoom = this.rmRooms.query(xid, this.rmRooms.getID(), location);
+                if (resourceRoom == null) {
+                    return false;
+                }
+
+                Hotel hotel = (Hotel) resourceRoom;
+                if (hotel.getNumAvail() < 1) {
+                    return false;
+                }
+            }
+
+            for (String flightNum : flights) {
+                boolean ret = this.reserveFlight(xid, custName, flightNum);
+                if (!ret) {
+                    return false;
+                }
+            }
+
+            if (needCar) {
+                boolean ret = this.reserveCar(xid, custName, location);
+                if (!ret) {
+                    return false;
+                }
+            }
+
+            if (needRoom) {
+                return this.reserveRoom(xid, custName, location);
+            }
+
+            return true;
+        } catch (DeadlockException e) {
+            this.abort(xid);
+            throw new TransactionAbortedException(xid, e.getMessage());
+        }
+    }
+
     // TECHNICAL/TESTING INTERFACE
     public boolean reconnect() throws RemoteException {
         String rmiPort = System.getProperty("rmiPort");
@@ -858,48 +934,42 @@ public class WorkflowControllerImpl
     }
 
     public boolean dieNow(String who) throws RemoteException {
-        if (who.equals(TransactionManager.RMIName) ||
-                who.equals("ALL")) {
+        if (who.equals(TransactionManager.RMIName) || who.equals("ALL")) {
             try {
                 tm.dieNow();
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
         }
-        if (who.equals(ResourceManager.RMINameFlights) ||
-                who.equals("ALL")) {
+        if (who.equals(ResourceManager.RMINameFlights) || who.equals("ALL")) {
             try {
                 rmFlights.dieNow();
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
         }
-        if (who.equals(ResourceManager.RMINameRooms) ||
-                who.equals("ALL")) {
+        if (who.equals(ResourceManager.RMINameRooms) || who.equals("ALL")) {
             try {
                 rmRooms.dieNow();
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
         }
-        if (who.equals(ResourceManager.RMINameCars) ||
-                who.equals("ALL")) {
+        if (who.equals(ResourceManager.RMINameCars) || who.equals("ALL")) {
             try {
                 rmCars.dieNow();
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
         }
-        if (who.equals(ResourceManager.RMINameCustomers) ||
-                who.equals("ALL")) {
+        if (who.equals(ResourceManager.RMINameCustomers) || who.equals("ALL")) {
             try {
                 rmCustomers.dieNow();
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
         }
-        if (who.equals(WorkflowController.RMIName) ||
-                who.equals("ALL")) {
+        if (who.equals(WorkflowController.RMIName) || who.equals("ALL")) {
             System.exit(1);
         }
         return true;
