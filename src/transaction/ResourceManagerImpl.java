@@ -188,18 +188,18 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
 
     public boolean reconnect() {
         String rmiPort = System.getProperty("rmiPort");
-        rmiPort = Utils.getRmiport(rmiPort);
+        rmiPort = Utils.getOriginRmiport(rmiPort);
 
         try {
             Registry registry = LocateRegistry.getRegistry(Utils.getHostname(), 3345, Socket::new);
-
+            System.out.println(String.join("   ", registry.list()));
             tm = (TransactionManager) registry.lookup(rmiPort + TransactionManager.RMIName);
             System.out.println(myRMIName + "'s xids is Empty ? " + xids.isEmpty());
             for (Object xid1 : xids) {
                 int xid = (Integer) xid1;
                 System.out.println(myRMIName + " Re-enlist to TM with xid" + xid);
                 System.out.println("here1");
-                System.out.println(String.join("   ", registry.list()));
+
                 tm.ping();
                 System.out.println("here1-1");
                 tm.enlist(xid, this);
@@ -673,18 +673,18 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
 
         String rmiPort = System.getProperty("rmiPort");
 
-        try {
-            RMIServerSocketFactory ssf = port -> new ServerSocket(port, 0, java.net.InetAddress.getLocalHost());
-            RMIClientSocketFactory csf = Socket::new;
-            LocateRegistry.createRegistry(Integer.parseInt(rmiPort), csf, ssf);
+//        try {
+//            RMIServerSocketFactory ssf = port -> new ServerSocket(port, 0, java.net.InetAddress.getLocalHost());
+//            RMIClientSocketFactory csf = Socket::new;
+//            LocateRegistry.createRegistry(Integer.parseInt(rmiPort), csf, ssf);
+//
+////            LocateRegistry.createRegistry(Integer.parseInt(rmiPort));
+//            System.out.println("registered");
+//        } catch (Exception e) {
+//            System.out.println("Port has registered.");
+//        }
 
-//            LocateRegistry.createRegistry(Integer.parseInt(rmiPort));
-            System.out.println("registered");
-        } catch (Exception e) {
-            System.out.println("Port has registered.");
-        }
-
-        rmiPort = Utils.getRmiport(rmiPort);
+        rmiPort = Utils.getOriginRmiport(rmiPort);
 
         try {
             ResourceManagerImpl obj = new ResourceManagerImpl(rmiName);

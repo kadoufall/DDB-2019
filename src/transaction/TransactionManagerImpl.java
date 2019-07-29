@@ -59,6 +59,12 @@ public class TransactionManagerImpl
             this.xids = (Map<Integer, String>) cacheXids;
         }
 
+        Set<Integer> keys = this.xids.keySet();
+        for (Integer key : keys) {
+            if (!this.xids.get(key).equals(TransactionManager.COMMITTED)) {
+                this.xids.put(key, TransactionManager.ABORTED);
+            }
+        }
 
     }
 
@@ -150,6 +156,9 @@ public class TransactionManagerImpl
                 }
             } catch (Exception e) {
                 // occur when RM die, AfterPrepare, BeforePrepare
+
+                System.out.println("here");
+
                 e.printStackTrace();
                 this.abort(xid);
                 throw new TransactionAbortedException(xid, "commit prepare");
@@ -184,8 +193,8 @@ public class TransactionManagerImpl
                 resourceManager.commit(xid);
                 committedRMs.add(resourceManager);
             } catch (Exception e) {
-                // occur when RM die BeforeCommit
-                // when RM re-enlist, commit xid
+//                e.printStackTrace();
+
             }
         }
 
@@ -218,7 +227,11 @@ public class TransactionManagerImpl
         Set<ResourceManager> resourceManagers = this.xidRMs.get(xid);
 
         for (ResourceManager resourceManager : resourceManagers) {
-            resourceManager.abort(xid);
+            try {
+                resourceManager.abort(xid);
+            } catch (Exception e) {
+//                e.printStackTrace();
+            }
         }
 
         synchronized (this.xidRMs) {
@@ -247,7 +260,7 @@ public class TransactionManagerImpl
             return;
         }
         String resourceStatus = this.xids.get(xid);
-        try{
+        try {
             if (resourceStatus.equals(TransactionManager.ABORTED)) {
                 rm.abort(xid);
 
@@ -278,7 +291,6 @@ public class TransactionManagerImpl
         }
 
 
-
         try {
             synchronized (this.xidRMs) {
                 Set<ResourceManager> temp = this.xidRMs.get(xid);
@@ -302,7 +314,13 @@ public class TransactionManagerImpl
                 }
 
                 if (abort) {
-                    rm.abort(xid);
+                    // die RM before commit
+                    if (resourceStatus.equals(TransactionManager.COMMITTED)) {
+                        rm.commit(xid);
+                    } else {
+                        // die RM
+                        rm.abort(xid);
+                    }
 
                     ResourceManager ramdomRemove = temp.iterator().next();
                     temp.remove(ramdomRemove);
@@ -313,7 +331,16 @@ public class TransactionManagerImpl
                             this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
 
                         }
+                    } else {
+                        if (resourceStatus.equals(TransactionManager.COMMITTED)) {
+                            this.xidRMs.remove(xid);
+                            synchronized (this.xids) {
+                                this.xids.remove(xid);
+                                this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
+                            }
+                        }
                     }
+
 
 //                    if (temp.size() == 0) {
 //                        this.xidRMs.remove(xid);
@@ -335,6 +362,11 @@ public class TransactionManagerImpl
 
                 // new enlist
                 if (findSameRMId == null) {
+                    // TM die after commit
+                    if (resourceStatus.equals(TransactionManager.COMMITTED)) {
+                        rm.commit(xid);
+                    }
+
                     temp.add(rm);
                     this.xidRMs.put(xid, temp);
                     return;
@@ -411,18 +443,17 @@ public class TransactionManagerImpl
 
         System.out.println("TM init");
 
-        try {
-            RMIServerSocketFactory ssf = port -> new ServerSocket(port, 0, java.net.InetAddress.getLocalHost());
-            RMIClientSocketFactory csf = Socket::new;
-            LocateRegistry.createRegistry(Integer.parseInt(rmiPort), csf, ssf);
+//        try {
+////            RMIServerSocketFactory ssf = port -> new ServerSocket(port, 0, java.net.InetAddress.getLocalHost());
+////            RMIClientSocketFactory csf = Socket::new;
+////            LocateRegistry.createRegistry(Integer.parseInt(rmiPort), csf, ssf);
+////
+//////            LocateRegistry.createRegistry(Integer.parseInt(rmiPort));
+////        } catch (Exception e) {
+////            System.out.println("Port has registered.");
+////        }
 
-//            LocateRegistry.createRegistry(Integer.parseInt(rmiPort));
-        } catch (Exception e) {
-            System.out.println("Port has registered.");
-        }
-
-
-        rmiPort = Utils.getRmiport(rmiPort);
+        rmiPort = Utils.getOriginRmiport(rmiPort);
 
         try {
             TransactionManagerImpl obj = new TransactionManagerImpl();

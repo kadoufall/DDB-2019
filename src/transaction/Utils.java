@@ -30,4 +30,8 @@ public class Utils {
         }
         return ret;
     }
+
+    public static String getOriginRmiport(String rmiPort) {
+        return "//:" + rmiPort + "/";
+    }
 }

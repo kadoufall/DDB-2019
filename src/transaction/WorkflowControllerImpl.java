@@ -896,7 +896,7 @@ public class WorkflowControllerImpl
     // TECHNICAL/TESTING INTERFACE
     public boolean reconnect() throws RemoteException {
         String rmiPort = System.getProperty("rmiPort");
-        rmiPort = Utils.getRmiport(rmiPort);
+        rmiPort = Utils.getOriginRmiport(rmiPort);
 
         try {
             Registry registry = LocateRegistry.getRegistry(Utils.getHostname(), 3345, Socket::new);
@@ -1063,18 +1063,18 @@ public class WorkflowControllerImpl
 
         // InetAddress inetAddress = InetAddress.getByName("localhost");
 
-        try {
-            RMIServerSocketFactory ssf = port -> new ServerSocket(port, 0, java.net.InetAddress.getLocalHost());
-            RMIClientSocketFactory csf = Socket::new;
-            LocateRegistry.createRegistry(Integer.parseInt(rmiPort), csf, ssf);
+//        try {
+//            RMIServerSocketFactory ssf = port -> new ServerSocket(port, 0, java.net.InetAddress.getLocalHost());
+//            RMIClientSocketFactory csf = Socket::new;
+//            LocateRegistry.createRegistry(Integer.parseInt(rmiPort), csf, ssf);
+//
+////            LocateRegistry.createRegistry(Integer.parseInt(rmiPort));
+//            System.out.println("registered");
+//        } catch (Exception e) {
+//            System.out.println("Port has registered.");
+//        }
 
-//            LocateRegistry.createRegistry(Integer.parseInt(rmiPort));
-            System.out.println("registered");
-        } catch (Exception e) {
-            System.out.println("Port has registered.");
-        }
-
-        rmiPort = Utils.getRmiport(rmiPort);
+        rmiPort = Utils.getOriginRmiport(rmiPort);
 
         try {
             WorkflowControllerImpl obj = new WorkflowControllerImpl();

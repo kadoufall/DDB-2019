@@ -116,7 +116,7 @@ public class Client {
                 who.equals("ALL")) {
             try {
                 Registry registry = LocateRegistry.getRegistry(Utils.getHostname(), 3345, Socket::new);
-                rmiPort =  Utils.getRmiport(rmiPort);
+                rmiPort =  Utils.getOriginRmiport(rmiPort);
                 wc = (WorkflowController) registry.lookup(rmiPort + WorkflowController.RMIName);
             } catch (Exception e) {
                 e.printStackTrace();
