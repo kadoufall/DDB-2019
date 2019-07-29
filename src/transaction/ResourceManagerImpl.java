@@ -8,11 +8,16 @@ import transaction.exceptions.TransactionManagerUnaccessibleException;
 import transaction.models.ResourceItem;
 
 import java.io.*;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.rmi.Naming;
 import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.RMIClientSocketFactory;
+import java.rmi.server.RMIServerSocketFactory;
 import java.util.*;
 
 /**
@@ -61,8 +66,9 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
         new Thread(() -> {
             while (true) {
                 try {
-                    if (tm != null)
+                    if (tm != null) {
                         tm.ping();
+                    }
                 } catch (Exception e) {
                     System.out.println("tm is null");
                     e.printStackTrace();
@@ -182,19 +188,20 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
 
     public boolean reconnect() {
         String rmiPort = System.getProperty("rmiPort");
-        if (rmiPort == null) {
-            rmiPort = "";
-        } else if (!rmiPort.equals("")) {
-            rmiPort = "//:" + rmiPort + "/";
-        }
+        rmiPort = Utils.getRmiport(rmiPort);
 
         try {
-            tm = (TransactionManager) Naming.lookup(rmiPort + TransactionManager.RMIName);
+            Registry registry = LocateRegistry.getRegistry(Utils.getHostname(), 3345, Socket::new);
+
+            tm = (TransactionManager) registry.lookup(rmiPort + TransactionManager.RMIName);
             System.out.println(myRMIName + "'s xids is Empty ? " + xids.isEmpty());
             for (Object xid1 : xids) {
                 int xid = (Integer) xid1;
                 System.out.println(myRMIName + " Re-enlist to TM with xid" + xid);
                 System.out.println("here1");
+                System.out.println(String.join("   ", registry.list()));
+                tm.ping();
+                System.out.println("here1-1");
                 tm.enlist(xid, this);
                 System.out.println("here2");
                 if (dieTime.equals("AfterEnlist"))
@@ -658,8 +665,6 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
     public static void main(String[] args) {
         System.setSecurityManager(new RMISecurityManager());
 
-//        System.setProperty("java.rmi.server.hostname","172.17.0.2");
-
         String rmiName = System.getProperty("rmiName");
         if (rmiName == null || rmiName.equals("")) {
             System.err.println("No RMI name given");
@@ -667,15 +672,25 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
         }
 
         String rmiPort = System.getProperty("rmiPort");
-        if (rmiPort == null) {
-            rmiPort = "";
-        } else if (!rmiPort.equals("")) {
-            rmiPort = "//:" + rmiPort + "/";
+
+        try {
+            RMIServerSocketFactory ssf = port -> new ServerSocket(port, 0, java.net.InetAddress.getLocalHost());
+            RMIClientSocketFactory csf = Socket::new;
+            LocateRegistry.createRegistry(Integer.parseInt(rmiPort), csf, ssf);
+
+//            LocateRegistry.createRegistry(Integer.parseInt(rmiPort));
+            System.out.println("registered");
+        } catch (Exception e) {
+            System.out.println("Port has registered.");
         }
+
+        rmiPort = Utils.getRmiport(rmiPort);
 
         try {
             ResourceManagerImpl obj = new ResourceManagerImpl(rmiName);
-            Naming.rebind(rmiPort + rmiName, obj);
+            Registry registry = LocateRegistry.getRegistry(Utils.getHostname(), 3345, Socket::new);
+            registry.rebind(rmiPort + rmiName, obj);
+//            Naming.rebind(rmiPort + rmiName, obj);
             System.out.println(rmiName + " bound");
         } catch (Exception e) {
             System.err.println(rmiName + " not bound:" + e);

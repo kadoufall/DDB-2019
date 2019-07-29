@@ -4,15 +4,17 @@ import transaction.exceptions.InvalidTransactionException;
 import transaction.exceptions.TransactionAbortedException;
 
 import java.io.*;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.rmi.Naming;
 import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.rmi.server.RMIClientSocketFactory;
+import java.rmi.server.RMIServerSocketFactory;
+import java.util.*;
 
 /**
  * Transaction Manager for the Distributed Travel Reservation System.
@@ -126,6 +128,18 @@ public class TransactionManagerImpl
             throw new InvalidTransactionException(xid, "TM commit");
         }
 
+        if (this.xids.get(xid).equals(TransactionManager.ABORTED)) {
+            synchronized (this.xidRMs) {
+                this.xidRMs.remove(xid);
+            }
+            synchronized (this.xids) {
+                this.xids.remove(xid);
+                this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
+            }
+
+            throw new TransactionAbortedException(xid, "TM commit");
+        }
+
         Set<ResourceManager> resourceManagers = this.xidRMs.get(xid);
         for (ResourceManager resourceManager : resourceManagers) {
             try {
@@ -232,33 +246,104 @@ public class TransactionManagerImpl
             rm.abort(xid);
             return;
         }
+        String resourceStatus = this.xids.get(xid);
+        try{
+            if (resourceStatus.equals(TransactionManager.ABORTED)) {
+                rm.abort(xid);
 
-        synchronized (this.xidRMs) {
-            Set<ResourceManager> temp = this.xidRMs.get(xid);
-            ResourceManager find = null;
+                synchronized (this.xidRMs) {
+                    Set<ResourceManager> temp = this.xidRMs.get(xid);
+                    ResourceManager ramdomRemove = temp.iterator().next();
+                    temp.remove(ramdomRemove);
+                    if (temp.size() > 0) {
+                        this.xidRMs.put(xid, temp);
+                    }
 
-            for (ResourceManager r : temp) {
-                if (r.getID().equals(rm.getID())) {
-                    find = r;
-                    break;
+
+//                if (temp.size() == 0) {
+//                    this.xidRMs.remove(xid);
+//                    synchronized (this.xids) {
+//                        this.xids.remove(xid);
+//                        this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
+//                    }
+//                } else {
+//                    this.xidRMs.put(xid, temp);
+//                }
                 }
-            }
 
-            if (xid == 2 && rm.getID().equals(ResourceManager.RMINameCars)) {
-                System.out.println(temp.size());
+                return;
+            }
+        } catch (Exception ee) {
+            ee.printStackTrace();
+        }
+
+
+
+        try {
+            synchronized (this.xidRMs) {
+                Set<ResourceManager> temp = this.xidRMs.get(xid);
+                ResourceManager findSameRMId = null;
+                boolean abort = false;
+
+                if (temp == null) {
+                    temp = new HashSet<>();
+                    this.xidRMs.put(xid, temp);
+                }
+
                 for (ResourceManager r : temp) {
-                    System.out.print(r.getID() + " ");
+                    try {
+                        if (r.getID().equals(rm.getID())) {
+                            findSameRMId = r;
+                        }
+                    } catch (Exception e) {
+                        abort = true;
+                        break;
+                    }
                 }
-                System.out.println();
-                System.out.println(find == null);
-                System.out.println(find == rm);
-                System.out.println(this.xids.get(xid));
-            }
 
-            if (find != null && find != rm) {
-                if (this.xids.get(xid).equals(TransactionManager.COMMITTED)) {
+                if (abort) {
+                    rm.abort(xid);
+
+                    ResourceManager ramdomRemove = temp.iterator().next();
+                    temp.remove(ramdomRemove);
+                    if (temp.size() > 0) {
+                        this.xidRMs.put(xid, temp);
+                        synchronized (this.xids) {
+                            this.xids.put(xid, TransactionManager.ABORTED);
+                            this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
+
+                        }
+                    }
+
+//                    if (temp.size() == 0) {
+//                        this.xidRMs.remove(xid);
+//                        synchronized (this.xids) {
+//                            this.xids.remove(xid);
+//                            this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
+//                        }
+//                    } else {
+//                        this.xidRMs.put(xid, temp);
+//                        synchronized (this.xids) {
+//                            this.xids.put(xid, TransactionManager.ABORTED);
+//                            this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
+//
+//                        }
+//                    }
+
+                    return;
+                }
+
+                // new enlist
+                if (findSameRMId == null) {
+                    temp.add(rm);
+                    this.xidRMs.put(xid, temp);
+                    return;
+                }
+
+                // re-enlist
+                if (findSameRMId != rm && resourceStatus.equals(TransactionManager.COMMITTED)) {
                     rm.commit(xid);
-                    temp.remove(find);
+                    temp.remove(findSameRMId);
                     if (temp.size() == 0) {
                         this.xidRMs.remove(xid);
                         synchronized (this.xids) {
@@ -268,21 +353,13 @@ public class TransactionManagerImpl
                     } else {
                         this.xidRMs.put(xid, temp);
                     }
-                } else if (this.xids.get(xid).equals(TransactionManager.NEW)) {
-                    // replace find with rm
-                    temp.remove(find);
-                    temp.add(rm);
-                    this.xidRMs.put(xid, temp);
                 }
-
-            } else if (find == null) {
-                temp.add(rm);
-
-                this.xidRMs.put(xid, temp);
-            } else {
-                System.out.println("same");
             }
+        } catch (Exception e) {
+            System.out.println("hhhhhhhh");
+            e.printStackTrace();
         }
+
 /*
         if (this.xids.get(xid).equals(TransactionManager.COMMITTED)) {
             rm.commit(xid);
@@ -330,18 +407,28 @@ public class TransactionManagerImpl
     public static void main(String[] args) {
         System.setSecurityManager(new RMISecurityManager());
 
-//        System.setProperty("java.rmi.server.hostname","172.17.0.2");
-
         String rmiPort = System.getProperty("rmiPort");
-        if (rmiPort == null) {
-            rmiPort = "";
-        } else if (!rmiPort.equals("")) {
-            rmiPort = "//:" + rmiPort + "/";
+
+        System.out.println("TM init");
+
+        try {
+            RMIServerSocketFactory ssf = port -> new ServerSocket(port, 0, java.net.InetAddress.getLocalHost());
+            RMIClientSocketFactory csf = Socket::new;
+            LocateRegistry.createRegistry(Integer.parseInt(rmiPort), csf, ssf);
+
+//            LocateRegistry.createRegistry(Integer.parseInt(rmiPort));
+        } catch (Exception e) {
+            System.out.println("Port has registered.");
         }
+
+
+        rmiPort = Utils.getRmiport(rmiPort);
 
         try {
             TransactionManagerImpl obj = new TransactionManagerImpl();
-            Naming.rebind(rmiPort + TransactionManager.RMIName, obj);
+            Registry registry = LocateRegistry.getRegistry(Utils.getHostname(), 3345, Socket::new);
+            registry.rebind(rmiPort + TransactionManager.RMIName, obj);
+//            Naming.rebind(rmiPort + TransactionManager.RMIName, obj);
 
             // TODO
 

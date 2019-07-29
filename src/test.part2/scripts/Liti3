@@ -20,7 +20,7 @@
 1 call reserveItinerary xid "John" (347,3471) "Stanford" false true 
 1 return true 
 2 call queryCustomerBill xid "John"
-2 return 0
+2 return
 1 call commit xid
 1 return true
 2 exit

@@ -7,11 +7,17 @@ import transaction.exceptions.TransactionAbortedException;
 import transaction.models.*;
 
 import java.io.*;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.rmi.Naming;
 import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.RMIClientSocketFactory;
+import java.rmi.server.RMIServerSocketFactory;
 import java.util.*;
 
 /**
@@ -890,30 +896,30 @@ public class WorkflowControllerImpl
     // TECHNICAL/TESTING INTERFACE
     public boolean reconnect() throws RemoteException {
         String rmiPort = System.getProperty("rmiPort");
-        if (rmiPort == null) {
-            rmiPort = "";
-        } else if (!rmiPort.equals("")) {
-            rmiPort = "//:" + rmiPort + "/";
-        }
+        rmiPort = Utils.getRmiport(rmiPort);
 
         try {
-            rmFlights = (ResourceManager) Naming.lookup(
+            Registry registry = LocateRegistry.getRegistry(Utils.getHostname(), 3345, Socket::new);
+
+            System.out.println(String.join("   ", registry.list()));
+
+            rmFlights = (ResourceManager) registry.lookup(
                     rmiPort + ResourceManager.RMINameFlights);
             System.out.println("WC bound to RMFlights");
 
-            rmRooms = (ResourceManager) Naming.lookup(
+            rmRooms = (ResourceManager) registry.lookup(
                     rmiPort + ResourceManager.RMINameRooms);
             System.out.println("WC bound to RMRooms");
 
-            rmCars = (ResourceManager) Naming.lookup(
+            rmCars = (ResourceManager) registry.lookup(
                     rmiPort + ResourceManager.RMINameCars);
             System.out.println("WC bound to RMCars");
 
-            rmCustomers = (ResourceManager) Naming.lookup(
+            rmCustomers = (ResourceManager) registry.lookup(
                     rmiPort + ResourceManager.RMINameCustomers);
             System.out.println("WC bound to RMCustomers");
 
-            tm = (TransactionManager) Naming.lookup(
+            tm = (TransactionManager) registry.lookup(
                     rmiPort + TransactionManager.RMIName);
             System.out.println("WC bound to TM");
         } catch (Exception e) {
@@ -1053,18 +1059,28 @@ public class WorkflowControllerImpl
     public static void main(String[] args) {
         System.setSecurityManager(new RMISecurityManager());
 
-//        System.setProperty("java.rmi.server.hostname","172.17.0.2");
-
         String rmiPort = System.getProperty("rmiPort");
-        if (rmiPort == null) {
-            rmiPort = "";
-        } else if (!rmiPort.equals("")) {
-            rmiPort = "//:" + rmiPort + "/";
+
+        // InetAddress inetAddress = InetAddress.getByName("localhost");
+
+        try {
+            RMIServerSocketFactory ssf = port -> new ServerSocket(port, 0, java.net.InetAddress.getLocalHost());
+            RMIClientSocketFactory csf = Socket::new;
+            LocateRegistry.createRegistry(Integer.parseInt(rmiPort), csf, ssf);
+
+//            LocateRegistry.createRegistry(Integer.parseInt(rmiPort));
+            System.out.println("registered");
+        } catch (Exception e) {
+            System.out.println("Port has registered.");
         }
+
+        rmiPort = Utils.getRmiport(rmiPort);
 
         try {
             WorkflowControllerImpl obj = new WorkflowControllerImpl();
-            Naming.rebind(rmiPort + WorkflowController.RMIName, obj);
+            Registry registry = LocateRegistry.getRegistry(Utils.getHostname(), 3345, Socket::new);
+            registry.rebind(rmiPort + WorkflowController.RMIName, obj);
+//            Naming.rebind(rmiPort + WorkflowController.RMIName, obj);
             System.out.println("WC bound");
         } catch (Exception e) {
             System.err.println("WC not bound:" + e);

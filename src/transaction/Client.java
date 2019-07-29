@@ -1,7 +1,10 @@
 package transaction;
 
+import java.net.Socket;
 import java.rmi.*;
 import java.io.*;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.*;
 import java.lang.reflect.*;
 
@@ -39,8 +42,6 @@ public class Client {
             new BufferedReader(new InputStreamReader(System.in));
 
     public static void main(String[] args) {
-//        System.setProperty("java.rmi.server.hostname","172.17.0.2");
-
         launch("ALL");
 
         readNextLine();
@@ -114,8 +115,9 @@ public class Client {
         if (who.equals(WorkflowController.RMIName) ||
                 who.equals("ALL")) {
             try {
-                wc = (WorkflowController) Naming.lookup("//:" + rmiPort +
-                        "/" + WorkflowController.RMIName);
+                Registry registry = LocateRegistry.getRegistry(Utils.getHostname(), 3345, Socket::new);
+                rmiPort =  Utils.getRmiport(rmiPort);
+                wc = (WorkflowController) registry.lookup(rmiPort + WorkflowController.RMIName);
             } catch (Exception e) {
                 e.printStackTrace();
                 System.err.println("Cannot bind to " + WorkflowController.RMIName + ": " + e);

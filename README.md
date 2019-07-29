@@ -43,7 +43,10 @@ make runrmflights & make runrmrooms & make runrmcars & make runrmcustomers
 
 
 
+kill $(lsof -t -i:3345)
+lsof -c java
 
+make runregistry &
 
 
 
