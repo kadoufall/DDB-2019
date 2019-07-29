@@ -19,6 +19,11 @@ public interface TransactionManager extends Remote {
      */
     public static final String RMIName = "TM";
 
+    public static final String NEW = "NEW";
+    public static final String PREPARED = "PREPARED";
+    public static final String COMMITTED = "COMMITTED";
+    public static final String ABORTED = "ABORTED";
+
     public int start() throws RemoteException;
 
     public boolean commit(int xid)

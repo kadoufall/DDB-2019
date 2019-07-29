@@ -9,7 +9,10 @@ import transaction.models.ResourceItem;
 
 import java.io.*;
 import java.rmi.Naming;
+import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.*;
 
 /**
@@ -61,6 +64,8 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
                     if (tm != null)
                         tm.ping();
                 } catch (Exception e) {
+                    System.out.println("tm is null");
+                    e.printStackTrace();
                     tm = null;
                 }
 
@@ -186,16 +191,19 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
         try {
             tm = (TransactionManager) Naming.lookup(rmiPort + TransactionManager.RMIName);
             System.out.println(myRMIName + "'s xids is Empty ? " + xids.isEmpty());
-            for (Iterator iter = xids.iterator(); iter.hasNext(); ) {
-                int xid = (Integer) iter.next();
+            for (Object xid1 : xids) {
+                int xid = (Integer) xid1;
                 System.out.println(myRMIName + " Re-enlist to TM with xid" + xid);
+                System.out.println("here1");
                 tm.enlist(xid, this);
+                System.out.println("here2");
                 if (dieTime.equals("AfterEnlist"))
                     dieNow();
                 //                iter.remove();
             }
             System.out.println(myRMIName + " bound to TM");
         } catch (Exception e) {
+            System.out.println("here3");
             System.err.println(myRMIName + " enlist error:" + e);
             return false;
         }
@@ -648,7 +656,9 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
     }
 
     public static void main(String[] args) {
-        System.setSecurityManager(new SecurityManager());
+        System.setSecurityManager(new RMISecurityManager());
+
+//        System.setProperty("java.rmi.server.hostname","172.17.0.2");
 
         String rmiName = System.getProperty("rmiName");
         if (rmiName == null || rmiName.equals("")) {

@@ -8,7 +8,10 @@ import transaction.models.*;
 
 import java.io.*;
 import java.rmi.Naming;
+import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.*;
 
 /**
@@ -111,9 +114,7 @@ public class WorkflowControllerImpl
     }
 
     public boolean commit(int xid)
-            throws RemoteException,
-            TransactionAbortedException,
-            InvalidTransactionException {
+            throws RemoteException, TransactionAbortedException, InvalidTransactionException {
         if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "commit");
         }
@@ -921,14 +922,29 @@ public class WorkflowControllerImpl
         }
 
         try {
-            if (rmFlights.reconnect() && rmRooms.reconnect() &&
-                    rmCars.reconnect() && rmCustomers.reconnect()) {
+            boolean b1 = rmFlights.reconnect();
+            System.out.println("flight " + b1);
+            boolean b2 = rmRooms.reconnect();
+            System.out.println("room " + b2);
+            boolean b3 = rmCars.reconnect();
+            System.out.println("car " + b3);
+            boolean b4 = rmCustomers.reconnect();
+            System.out.println("customer " + b4);
+
+            if (b1 && b2 && b3 && b4) {
                 return true;
             }
+//            if (rmFlights.reconnect() && rmRooms.reconnect() &&
+//                    rmCars.reconnect() && rmCustomers.reconnect()) {
+//                return true;
+//            }
         } catch (Exception e) {
             System.err.println("Some RM cannot reconnect:" + e);
             return false;
         }
+
+
+        System.err.println("here");
 
         return false;
     }
@@ -938,35 +954,35 @@ public class WorkflowControllerImpl
             try {
                 tm.dieNow();
             } catch (RemoteException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             }
         }
         if (who.equals(ResourceManager.RMINameFlights) || who.equals("ALL")) {
             try {
                 rmFlights.dieNow();
             } catch (RemoteException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             }
         }
         if (who.equals(ResourceManager.RMINameRooms) || who.equals("ALL")) {
             try {
                 rmRooms.dieNow();
             } catch (RemoteException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             }
         }
         if (who.equals(ResourceManager.RMINameCars) || who.equals("ALL")) {
             try {
                 rmCars.dieNow();
             } catch (RemoteException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             }
         }
         if (who.equals(ResourceManager.RMINameCustomers) || who.equals("ALL")) {
             try {
                 rmCustomers.dieNow();
             } catch (RemoteException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             }
         }
         if (who.equals(WorkflowController.RMIName) || who.equals("ALL")) {
@@ -1035,7 +1051,9 @@ public class WorkflowControllerImpl
     }
 
     public static void main(String[] args) {
-        System.setSecurityManager(new SecurityManager());
+        System.setSecurityManager(new RMISecurityManager());
+
+//        System.setProperty("java.rmi.server.hostname","172.17.0.2");
 
         String rmiPort = System.getProperty("rmiPort");
         if (rmiPort == null) {

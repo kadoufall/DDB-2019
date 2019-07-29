@@ -39,6 +39,8 @@ public class Client {
             new BufferedReader(new InputStreamReader(System.in));
 
     public static void main(String[] args) {
+//        System.setProperty("java.rmi.server.hostname","172.17.0.2");
+
         launch("ALL");
 
         readNextLine();
@@ -115,6 +117,7 @@ public class Client {
                 wc = (WorkflowController) Naming.lookup("//:" + rmiPort +
                         "/" + WorkflowController.RMIName);
             } catch (Exception e) {
+                e.printStackTrace();
                 System.err.println("Cannot bind to " + WorkflowController.RMIName + ": " + e);
                 cleanUpExit(2);
             }

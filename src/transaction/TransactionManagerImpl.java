@@ -5,7 +5,10 @@ import transaction.exceptions.TransactionAbortedException;
 
 import java.io.*;
 import java.rmi.Naming;
+import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -20,13 +23,12 @@ import java.util.Set;
 public class TransactionManagerImpl
         extends java.rmi.server.UnicastRemoteObject
         implements TransactionManager {
-    private final static String TM_TRANSACTION_NUM_LOG_FILENAME = "data/wc_xidNum.log";
-    private final static String TM_TRANSACTION_LOG_FILENAME = "data/wc_xids.log";
-    private final static String TM_TRANSACTION_RMs_LOG_FILENAME = "data/wc_xidRMs.log";
+    private final static String TM_TRANSACTION_NUM_LOG_FILENAME = "data/tm_xidNum.log";
+    private final static String TM_TRANSACTION_LOG_FILENAME = "data/tm_xids.log";
 
     private String dieTime;
     private Integer xidNum;
-    private Map<Integer, TransactionStatus> xids;
+    private Map<Integer, String> xids;
     private Map<Integer, Set<ResourceManager>> xidRMs;
 
     public TransactionManagerImpl() throws RemoteException {
@@ -52,9 +54,8 @@ public class TransactionManagerImpl
         // load xids from file
         Object cacheXids = this.loadFromFile(TM_TRANSACTION_LOG_FILENAME);
         if (cacheXids != null) {
-            this.xids = (Map<Integer, TransactionStatus>) cacheXids;
+            this.xids = (Map<Integer, String>) cacheXids;
         }
-
 
 
     }
@@ -106,7 +107,7 @@ public class TransactionManagerImpl
             this.storeToFile(TM_TRANSACTION_NUM_LOG_FILENAME, this.xidNum);
 
             synchronized (this.xids) {
-                this.xids.put(curXid, TransactionStatus.NEW);
+                this.xids.put(curXid, TransactionManager.NEW);
                 this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
             }
 
@@ -125,8 +126,6 @@ public class TransactionManagerImpl
             throw new InvalidTransactionException(xid, "TM commit");
         }
 
-        System.out.println(xid);
-
         Set<ResourceManager> resourceManagers = this.xidRMs.get(xid);
         for (ResourceManager resourceManager : resourceManagers) {
             try {
@@ -144,7 +143,7 @@ public class TransactionManagerImpl
         }
 
         synchronized (this.xids) {
-            xids.put(xid, TransactionStatus.PREPARED);
+            xids.put(xid, TransactionManager.PREPARED);
             this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
         }
 
@@ -156,7 +155,7 @@ public class TransactionManagerImpl
 
         // log "committed"
         synchronized (this.xids) {
-            xids.put(xid, TransactionStatus.COMMITTED);
+            xids.put(xid, TransactionManager.COMMITTED);
             this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
         }
 
@@ -234,7 +233,58 @@ public class TransactionManagerImpl
             return;
         }
 
-        if (this.xids.get(xid) == TransactionStatus.COMMITTED) {
+        synchronized (this.xidRMs) {
+            Set<ResourceManager> temp = this.xidRMs.get(xid);
+            ResourceManager find = null;
+
+            for (ResourceManager r : temp) {
+                if (r.getID().equals(rm.getID())) {
+                    find = r;
+                    break;
+                }
+            }
+
+            if (xid == 2 && rm.getID().equals(ResourceManager.RMINameCars)) {
+                System.out.println(temp.size());
+                for (ResourceManager r : temp) {
+                    System.out.print(r.getID() + " ");
+                }
+                System.out.println();
+                System.out.println(find == null);
+                System.out.println(find == rm);
+                System.out.println(this.xids.get(xid));
+            }
+
+            if (find != null && find != rm) {
+                if (this.xids.get(xid).equals(TransactionManager.COMMITTED)) {
+                    rm.commit(xid);
+                    temp.remove(find);
+                    if (temp.size() == 0) {
+                        this.xidRMs.remove(xid);
+                        synchronized (this.xids) {
+                            this.xids.remove(xid);
+                            this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
+                        }
+                    } else {
+                        this.xidRMs.put(xid, temp);
+                    }
+                } else if (this.xids.get(xid).equals(TransactionManager.NEW)) {
+                    // replace find with rm
+                    temp.remove(find);
+                    temp.add(rm);
+                    this.xidRMs.put(xid, temp);
+                }
+
+            } else if (find == null) {
+                temp.add(rm);
+
+                this.xidRMs.put(xid, temp);
+            } else {
+                System.out.println("same");
+            }
+        }
+/*
+        if (this.xids.get(xid).equals(TransactionManager.COMMITTED)) {
             rm.commit(xid);
             Set<ResourceManager> temp = this.xidRMs.get(xid);
             ResourceManager find = null;
@@ -274,10 +324,13 @@ public class TransactionManagerImpl
 
             this.xidRMs.put(xid, resourceManagers);
         }
+*/
     }
 
     public static void main(String[] args) {
-        System.setSecurityManager(new SecurityManager());
+        System.setSecurityManager(new RMISecurityManager());
+
+//        System.setProperty("java.rmi.server.hostname","172.17.0.2");
 
         String rmiPort = System.getProperty("rmiPort");
         if (rmiPort == null) {

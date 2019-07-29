@@ -38,9 +38,8 @@ FdieRMBeforeCommit
   
 docker exec -it ubuntu bash
 cd home/projects/DDB-Project2019/OptionSourceCode/src/transaction
+
 make runrmflights & make runrmrooms & make runrmcars & make runrmcustomers
-
-
 
 
 
