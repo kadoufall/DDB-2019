@@ -187,7 +187,16 @@
         Atomicity  
     </test>
     
-    <test id="Atomicity" fpoints='0'>
+    <test id="Consistency" fpoints='0'>
         Consistency
     </test>
+    
+    <test id="Isolation" fpoints='0'>
+        Isolation
+    </test>
+     
+    <test id="Durability" fpoints='0'>
+        Durability
+    </test>
+    
 </tests>
