@@ -182,4 +182,8 @@
     <test id="Baddchange" fpoints='0'>
         basic data updating
     </test>
+        
+    <test id="Atomicity" fpoints='0'>
+        Atomicity  
+    </test>
 </tests>
