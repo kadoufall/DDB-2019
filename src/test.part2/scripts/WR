@@ -1,0 +1,18 @@
+2
+1 call start
+1 return 
+1 call addRooms xid "Stanford" 200 150
+1 return true
+1 call commit xid
+1 return true
+1 call xid
+1 return
+2 call start
+2 return 
+1 call addRooms xid "Standford" 200 300
+1 return true
+2 call queryRoomsPrice xid "Stanford"
+1 call commit xid
+1 return true
+2 return 300
+2 exit
