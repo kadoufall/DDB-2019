@@ -157,5 +157,22 @@
     <test id="Funlock" fpoints="5">
         RM releases locks before final commit.
     </test>
+        
+    new tests
+    <test id="WR" fpoints='0'>
+        add should acquire all locks and query should wait locks to read data.
+    </test>
+
+    <test id="RRWW" fpoints='0'>
+        ...
+    </test>
+
+    <test id="RRWW_PASS" fpoints='0'>
+        ...
+    </test>
+
+    <test id="RRWW_WAIT" fpoints='0'>
+        ...
+    </test>
 
 </tests>
