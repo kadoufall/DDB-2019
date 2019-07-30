@@ -186,4 +186,8 @@
     <test id="Atomicity" fpoints='0'>
         Atomicity  
     </test>
+    
+    <test id="Atomicity" fpoints='0'>
+        Consistency
+    </test>
 </tests>
