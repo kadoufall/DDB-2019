@@ -1,7 +1,7 @@
 1
 1 call start
 1 return
-1 call addFight xid "347" 100 310
+1 call addFlight xid "347" 100 310
 1 return true
 1 call dieTMBeforeCommit
 1 return true

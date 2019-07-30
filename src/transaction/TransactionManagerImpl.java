@@ -142,27 +142,9 @@ public class TransactionManagerImpl extends java.rmi.server.UnicastRemoteObject
     @Override
     public boolean commit(int xid) throws RemoteException, InvalidTransactionException, TransactionAbortedException {
         if (!this.xids.containsKey(xid)) {
-            throw new InvalidTransactionException(xid, "TM commit");
-        }
-
-        // if dieRMAfterEnlist, dieRM,
-        // then in enlist, xid must be marked as ABORTED
-        // then when xid commit, check the Transaction Status
-        // if ABORTED, then abort
-        if (this.xids.get(xid).equals(TransactionManager.ABORTED)) {
-            synchronized (this.xidRMs) {
-                this.xidRMs.remove(xid);
-                this.storeToFile(TM_TRANSACTION_RMs_LOG_FILENAME, this.xidRMs);
-            }
-            synchronized (this.xids) {
-                this.xids.remove(xid);
-                this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
-            }
-
             throw new TransactionAbortedException(xid, "TM commit");
         }
 
-        // 2-PC
         // prepare
         Set<ResourceManager> resourceManagers = this.xidRMs.get(xid);
         for (ResourceManager resourceManager : resourceManagers) {
@@ -286,11 +268,14 @@ public class TransactionManagerImpl extends java.rmi.server.UnicastRemoteObject
             return;
         }
 
+
         synchronized (this.xids) {
             String resourceStatus = this.xids.get(xid);
 
             // if one of the other RMs with the same xid die, then all RM must abort the xid
             // this will occur when other xid has already been marked ABORTED
+
+            // if TM die and restart, all RM will abort
             if (resourceStatus.equals(TransactionManager.ABORTED)) {
                 rm.abort(xid);
 
@@ -301,9 +286,13 @@ public class TransactionManagerImpl extends java.rmi.server.UnicastRemoteObject
                     if (temp.size() > 0) {
                         this.xidRMs.put(xid, temp);
                         this.storeToFile(TM_TRANSACTION_RMs_LOG_FILENAME, this.xidRMs);
-                    }
+                    } else {
+                        this.xidRMs.remove(xid);
+                        this.storeToFile(TM_TRANSACTION_RMs_LOG_FILENAME, this.xidRMs);
 
-                    // we do not update xids and xidRMs here, cause TM will update in commit
+                        this.xids.remove(xid);
+                        this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
+                    }
                 }
 
                 return;
@@ -344,9 +333,6 @@ public class TransactionManagerImpl extends java.rmi.server.UnicastRemoteObject
                     } catch (Exception e) {
                         // if some RM die, then r.getID() will case an exception
                         // dieRM, dieRMAfterEnlist,
-
-                        // if TM die, then r.getID() will case an exception
-                        // dieTMBeforeCommit, dieTM
                         abort = true;
                         break;
                     }
@@ -362,20 +348,14 @@ public class TransactionManagerImpl extends java.rmi.server.UnicastRemoteObject
                         this.storeToFile(TM_TRANSACTION_RMs_LOG_FILENAME, this.xidRMs);
 
                         // for dieRM, dieRMAfterEnlist, dieTM
-                        if (!resourceStatus.equals(TransactionManager.PREPARED)) {
-                            this.xids.put(xid, TransactionManager.ABORTED);
-                            this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
-
-                        }
+                        this.xids.put(xid, TransactionManager.ABORTED);
+                        this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
                     } else {
-                        // for dieTMBeforeCommit
-                        if (resourceStatus.equals(TransactionManager.PREPARED)) {
-                            this.xidRMs.remove(xid);
-                            this.storeToFile(TM_TRANSACTION_RMs_LOG_FILENAME, this.xidRMs);
+                        this.xidRMs.remove(xid);
+                        this.storeToFile(TM_TRANSACTION_RMs_LOG_FILENAME, this.xidRMs);
 
-                            this.xids.remove(xid);
-                            this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
-                        }
+                        this.xids.remove(xid);
+                        this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
                     }
 
                     return;
