@@ -334,8 +334,8 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
         }
     }
 
-    public Collection query(int xid, String tablename) throws DeadlockException, InvalidTransactionException,
-            RemoteException {
+    public Collection query(int xid, String tablename)
+            throws DeadlockException, InvalidTransactionException, RemoteException {
         if (xid < 0) {
             throw new InvalidTransactionException(xid, "Xid must be positive.");
         }
