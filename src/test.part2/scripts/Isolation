@@ -12,15 +12,15 @@
 2 call start
 2 return
 2 call addFlight xid "347" 200 300
-2 except transaction.TransactionAbortedException
+2 except transaction.exceptions.TransactionAbortedException
 1 call queryFlight xid "347"
 1 return 200
 1 call commit xid
 1 return true
 2 call start
 2 return
-2 call addFlight xid 347" 400 3000
+2 call addFlight xid "347" 400 3000
 2 return true
 2 call queryFlight xid "347"
-2 return 400
+2 return 600
 2 exit

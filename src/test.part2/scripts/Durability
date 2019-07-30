@@ -13,5 +13,5 @@
 1 call queryFlight xid "347"
 1 return 100
 1 call queryRooms xid "Stanford"
-1 rerturn 200
+1 return 200
 1 exit

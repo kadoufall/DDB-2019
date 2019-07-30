@@ -157,46 +157,31 @@
     <test id="Funlock" fpoints="5">
         RM releases locks before final commit.
     </test>
-        
-    new tests
-    <test id="WR" fpoints='0'>
-        add should acquire all locks and query should wait locks to read data.
-    </test>
 
-    <test id="RRWW" fpoints='0'>
-        ...
-    </test>
+    <!--Custom tests-->
 
-    <test id="RRWW_PASS" fpoints='0'>
-        ...
-    </test>
-
-    <test id="RRWW_WAIT" fpoints='0'>
-        ...
-    </test>
-    
     <test id="Badddel" fpoints='0'>
         basic delet
     </test>
-        
+
     <test id="Baddchange" fpoints='0'>
         basic data updating
     </test>
-        
+
     <test id="Atomicity" fpoints='0'>
-        Atomicity  
+        Atomicity
     </test>
-    
+
     <test id="Consistency" fpoints='0'>
         Consistency
     </test>
-    
+
     <test id="Isolation" fpoints='0'>
         Isolation
     </test>
-     
+
     <test id="Durability" fpoints='0'>
         Durability
     </test>
-    
+
 </tests>
