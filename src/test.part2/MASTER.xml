@@ -174,5 +174,12 @@
     <test id="RRWW_WAIT" fpoints='0'>
         ...
     </test>
-
+    
+    <test id="Badddel" fpoints='0'>
+        basic delet
+    </test>
+        
+    <test id="Baddchange" fpoints='0'>
+        basic data updating
+    </test>
 </tests>
