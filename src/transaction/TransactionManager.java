@@ -19,6 +19,9 @@ public interface TransactionManager extends Remote {
      */
     public static final String RMIName = "TM";
 
+    /**
+     * The transaction status
+     */
     public static final String NEW = "NEW";
     public static final String PREPARED = "PREPARED";
     public static final String COMMITTED = "COMMITTED";
@@ -27,13 +30,10 @@ public interface TransactionManager extends Remote {
     public int start() throws RemoteException;
 
     public boolean commit(int xid)
-            throws RemoteException,
-            InvalidTransactionException,
-            TransactionAbortedException;
+            throws RemoteException, InvalidTransactionException, TransactionAbortedException;
 
     public void abort(int xid)
-            throws RemoteException,
-            InvalidTransactionException;
+            throws RemoteException, InvalidTransactionException;
 
     public void setDieTime(String time) throws RemoteException;
 

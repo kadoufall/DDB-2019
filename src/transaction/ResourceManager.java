@@ -27,6 +27,7 @@ public interface ResourceManager extends Remote {
     public static final String RMINameCars = "RMCars";
     public static final String RMINameCustomers = "RMCustomers";
 
+    // Reservation table name
     public static final String TableMameReservations = "RMReservations";
 
     public Set getTransactions() throws RemoteException;

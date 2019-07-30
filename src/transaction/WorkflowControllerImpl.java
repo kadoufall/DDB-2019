@@ -7,17 +7,10 @@ import transaction.exceptions.TransactionAbortedException;
 import transaction.models.*;
 
 import java.io.*;
-import java.net.InetAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
-import java.rmi.Naming;
-import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.server.RMIClientSocketFactory;
-import java.rmi.server.RMIServerSocketFactory;
 import java.util.*;
 
 /**
@@ -28,10 +21,10 @@ import java.util.*;
  * instead of doing the things itself.
  */
 
-public class WorkflowControllerImpl
-        extends java.rmi.server.UnicastRemoteObject
+public class WorkflowControllerImpl extends java.rmi.server.UnicastRemoteObject
         implements WorkflowController {
 
+    // If WC die, restart and load xids from "data/wc_xids.log"
     private final static String WC_TRANSACTION_LOG_FILENAME = "data/wc_xids.log";
 
     private ResourceManager rmFlights;
@@ -39,6 +32,8 @@ public class WorkflowControllerImpl
     private ResourceManager rmCars;
     private ResourceManager rmCustomers;
     private TransactionManager tm;
+
+    // all active xids
     private Set<Integer> xids;
 
     public WorkflowControllerImpl() throws RemoteException {
@@ -49,6 +44,7 @@ public class WorkflowControllerImpl
         this.tm = null;
         this.xids = new HashSet<>();
 
+        // recover from die
         this.recover();
 
         while (!reconnect()) {
@@ -110,7 +106,7 @@ public class WorkflowControllerImpl
 
     // TRANSACTION INTERFACE
     public int start() throws RemoteException {
-        // do not need synchronized, because tm.start() is synchronized
+        // do not need synchronized, because tm.start() is synchronized, so xid is unique
         int xid = tm.start();
         this.xids.add(xid);
 
@@ -152,9 +148,8 @@ public class WorkflowControllerImpl
         if (flightNum == null || numSeats < 0) {
             return false;
         }
-        if (price < 0) {
-            price = 0;
-        }
+
+        price = price < 0 ? 0 : price;
 
         // find flight related to flightNum
         ResourceItem resourceItem;
@@ -169,6 +164,7 @@ public class WorkflowControllerImpl
         if (resourceItem == null) {
             Flight flight = new Flight(flightNum, price, numSeats, numSeats);
 
+            // insert
             try {
                 return this.rmFlights.insert(xid, this.rmFlights.getID(), flight);
             } catch (DeadlockException e) {
@@ -182,6 +178,7 @@ public class WorkflowControllerImpl
         flight.addSeats(numSeats);
         flight.setPrice(price);
 
+        // update
         try {
             return this.rmFlights.update(xid, this.rmFlights.getID(), flightNum, flight);
         } catch (DeadlockException e) {
@@ -192,34 +189,34 @@ public class WorkflowControllerImpl
     }
 
     public boolean deleteFlight(int xid, String flightNum)
-            throws RemoteException,
-            TransactionAbortedException,
-            InvalidTransactionException {
+            throws RemoteException, TransactionAbortedException, InvalidTransactionException {
+        // check input
         if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "deleteFlight");
         }
-
         if (flightNum == null) {
             return false;
         }
 
         try {
             ResourceItem resourceItem = this.rmFlights.query(xid, this.rmFlights.getID(), flightNum);
-
             if (resourceItem == null) {
                 return false;
             }
 
+            // find all related reservations
             Collection reservations = this.rmCustomers.query(
                     xid,
                     ResourceManager.TableMameReservations,
                     Reservation.INDEX_CUSTNAME,
                     flightNum);
 
+            // has reservations, stop delete
             if (!reservations.isEmpty()) {
                 return false;
             }
 
+            // no reservations, delete
             resourceItem.delete();
 
             return this.rmFlights.delete(xid, this.rmFlights.getID(), flightNum);
@@ -234,9 +231,7 @@ public class WorkflowControllerImpl
     }
 
     public boolean addRooms(int xid, String location, int numRooms, int price)
-            throws RemoteException,
-            TransactionAbortedException,
-            InvalidTransactionException {
+            throws RemoteException, TransactionAbortedException, InvalidTransactionException {
         // check input
         if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "addRooms");
@@ -244,9 +239,7 @@ public class WorkflowControllerImpl
         if (location == null || numRooms < 0) {
             return false;
         }
-        if (price < 0) {
-            price = 0;
-        }
+        price = price < 0 ? 0 : price;
 
         // find hotel related to location
         ResourceItem resourceItem;
@@ -261,6 +254,7 @@ public class WorkflowControllerImpl
         if (resourceItem == null) {
             Hotel hotel = new Hotel(location, price, numRooms, numRooms);
 
+            // insert
             try {
                 return this.rmRooms.insert(xid, this.rmRooms.getID(), hotel);
             } catch (DeadlockException e) {
@@ -274,6 +268,7 @@ public class WorkflowControllerImpl
         hotel.addRooms(numRooms);
         hotel.setPrice(price);
 
+        // update
         try {
             return this.rmRooms.update(xid, this.rmRooms.getID(), location, hotel);
         } catch (DeadlockException e) {
@@ -283,20 +278,17 @@ public class WorkflowControllerImpl
     }
 
     public boolean deleteRooms(int xid, String location, int numRooms)
-            throws RemoteException,
-            TransactionAbortedException,
-            InvalidTransactionException {
+            throws RemoteException, TransactionAbortedException, InvalidTransactionException {
+        // check input
         if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "deleteRooms");
         }
-
         if (location == null || numRooms < 0) {
             return false;
         }
 
         try {
             ResourceItem resourceItem = this.rmRooms.query(xid, this.rmRooms.getID(), location);
-
             if (resourceItem == null) {
                 return false;
             }
@@ -317,9 +309,7 @@ public class WorkflowControllerImpl
     }
 
     public boolean addCars(int xid, String location, int numCars, int price)
-            throws RemoteException,
-            TransactionAbortedException,
-            InvalidTransactionException {
+            throws RemoteException, TransactionAbortedException, InvalidTransactionException {
         // check input
         if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "addCars");
@@ -327,9 +317,7 @@ public class WorkflowControllerImpl
         if (location == null || numCars < 0) {
             return false;
         }
-        if (price < 0) {
-            price = 0;
-        }
+        price = price < 0 ? 0 : price;
 
         // find car related to location
         ResourceItem resourceItem;
@@ -344,6 +332,7 @@ public class WorkflowControllerImpl
         if (resourceItem == null) {
             Car car = new Car(location, price, numCars, numCars);
 
+            // insert
             try {
                 return this.rmCars.insert(xid, this.rmCars.getID(), car);
             } catch (DeadlockException e) {
@@ -357,6 +346,7 @@ public class WorkflowControllerImpl
         car.addCars(numCars);
         car.setPrice(price);
 
+        // update
         try {
             return this.rmCars.update(xid, this.rmCars.getID(), location, car);
         } catch (DeadlockException e) {
@@ -366,13 +356,11 @@ public class WorkflowControllerImpl
     }
 
     public boolean deleteCars(int xid, String location, int numCars)
-            throws RemoteException,
-            TransactionAbortedException,
-            InvalidTransactionException {
+            throws RemoteException, TransactionAbortedException, InvalidTransactionException {
+        // check input
         if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "deleteCars");
         }
-
         if (location == null || numCars < 0) {
             return false;
         }
@@ -399,13 +387,11 @@ public class WorkflowControllerImpl
     }
 
     public boolean newCustomer(int xid, String custName)
-            throws RemoteException,
-            TransactionAbortedException,
-            InvalidTransactionException {
+            throws RemoteException, TransactionAbortedException, InvalidTransactionException {
+        // check input
         if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "newCustomer");
         }
-
         if (custName == null) {
             return false;
         }
@@ -434,13 +420,11 @@ public class WorkflowControllerImpl
     }
 
     public boolean deleteCustomer(int xid, String custName)
-            throws RemoteException,
-            TransactionAbortedException,
-            InvalidTransactionException {
+            throws RemoteException, TransactionAbortedException, InvalidTransactionException {
+        // check input
         if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "deleteCustomer");
         }
-
         if (custName == null) {
             return false;
         }
@@ -451,6 +435,7 @@ public class WorkflowControllerImpl
                 return false;
             }
 
+            // find all reservations related to custName
             Collection reservations = this.rmCustomers.query(
                     xid,
                     ResourceManager.TableMameReservations,
@@ -458,6 +443,7 @@ public class WorkflowControllerImpl
                     custName
             );
 
+            // cancel each reservation
             for (Object obj : reservations) {
                 Reservation reservation = (Reservation) obj;
                 String resvKey = reservation.getResvKey();
@@ -499,13 +485,10 @@ public class WorkflowControllerImpl
 
     // QUERY INTERFACE
     public int queryFlight(int xid, String flightNum)
-            throws RemoteException,
-            TransactionAbortedException,
-            InvalidTransactionException {
+            throws RemoteException, TransactionAbortedException, InvalidTransactionException {
         if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "queryFlight");
         }
-
         if (flightNum == null) {
             return -1;
         }
@@ -524,13 +507,10 @@ public class WorkflowControllerImpl
     }
 
     public int queryFlightPrice(int xid, String flightNum)
-            throws RemoteException,
-            TransactionAbortedException,
-            InvalidTransactionException {
+            throws RemoteException, TransactionAbortedException, InvalidTransactionException {
         if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "queryFlightPrice");
         }
-
         if (flightNum == null) {
             return -1;
         }
@@ -549,9 +529,7 @@ public class WorkflowControllerImpl
     }
 
     public int queryRooms(int xid, String location)
-            throws RemoteException,
-            TransactionAbortedException,
-            InvalidTransactionException {
+            throws RemoteException, TransactionAbortedException, InvalidTransactionException {
         if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "queryRooms");
         }
@@ -574,9 +552,7 @@ public class WorkflowControllerImpl
     }
 
     public int queryRoomsPrice(int xid, String location)
-            throws RemoteException,
-            TransactionAbortedException,
-            InvalidTransactionException {
+            throws RemoteException, TransactionAbortedException, InvalidTransactionException {
         if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "queryRoomsPrice");
         }
@@ -599,13 +575,10 @@ public class WorkflowControllerImpl
     }
 
     public int queryCars(int xid, String location)
-            throws RemoteException,
-            TransactionAbortedException,
-            InvalidTransactionException {
+            throws RemoteException, TransactionAbortedException, InvalidTransactionException {
         if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "queryCars");
         }
-
         if (location == null) {
             return -1;
         }
@@ -624,9 +597,7 @@ public class WorkflowControllerImpl
     }
 
     public int queryCarsPrice(int xid, String location)
-            throws RemoteException,
-            TransactionAbortedException,
-            InvalidTransactionException {
+            throws RemoteException, TransactionAbortedException, InvalidTransactionException {
         if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "queryCarsPrice");
         }
@@ -649,9 +620,7 @@ public class WorkflowControllerImpl
     }
 
     public int queryCustomerBill(int xid, String custName)
-            throws RemoteException,
-            TransactionAbortedException,
-            InvalidTransactionException {
+            throws RemoteException, TransactionAbortedException, InvalidTransactionException {
         if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "queryCustomerBill");
         }
@@ -703,9 +672,7 @@ public class WorkflowControllerImpl
 
     // RESERVATION INTERFACE
     public boolean reserveFlight(int xid, String custName, String flightNum)
-            throws RemoteException,
-            TransactionAbortedException,
-            InvalidTransactionException {
+            throws RemoteException, TransactionAbortedException, InvalidTransactionException {
         if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "reserveFlight");
         }
@@ -740,9 +707,7 @@ public class WorkflowControllerImpl
     }
 
     public boolean reserveCar(int xid, String custName, String location)
-            throws RemoteException,
-            TransactionAbortedException,
-            InvalidTransactionException {
+            throws RemoteException, TransactionAbortedException, InvalidTransactionException {
         if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "reserveCar");
         }
@@ -777,9 +742,7 @@ public class WorkflowControllerImpl
     }
 
     public boolean reserveRoom(int xid, String custName, String location)
-            throws RemoteException,
-            TransactionAbortedException,
-            InvalidTransactionException {
+            throws RemoteException, TransactionAbortedException, InvalidTransactionException {
         if (!this.xids.contains(xid)) {
             throw new InvalidTransactionException(xid, "reserveRoom");
         }
@@ -901,26 +864,19 @@ public class WorkflowControllerImpl
         try {
             Registry registry = LocateRegistry.getRegistry(Utils.getHostname(), 3345, Socket::new);
 
-            System.out.println(String.join("   ", registry.list()));
-
-            rmFlights = (ResourceManager) registry.lookup(
-                    rmiPort + ResourceManager.RMINameFlights);
+            rmFlights = (ResourceManager) registry.lookup(rmiPort + ResourceManager.RMINameFlights);
             System.out.println("WC bound to RMFlights");
 
-            rmRooms = (ResourceManager) registry.lookup(
-                    rmiPort + ResourceManager.RMINameRooms);
+            rmRooms = (ResourceManager) registry.lookup(rmiPort + ResourceManager.RMINameRooms);
             System.out.println("WC bound to RMRooms");
 
-            rmCars = (ResourceManager) registry.lookup(
-                    rmiPort + ResourceManager.RMINameCars);
+            rmCars = (ResourceManager) registry.lookup(rmiPort + ResourceManager.RMINameCars);
             System.out.println("WC bound to RMCars");
 
-            rmCustomers = (ResourceManager) registry.lookup(
-                    rmiPort + ResourceManager.RMINameCustomers);
+            rmCustomers = (ResourceManager) registry.lookup(rmiPort + ResourceManager.RMINameCustomers);
             System.out.println("WC bound to RMCustomers");
 
-            tm = (TransactionManager) registry.lookup(
-                    rmiPort + TransactionManager.RMIName);
+            tm = (TransactionManager) registry.lookup(rmiPort + TransactionManager.RMIName);
             System.out.println("WC bound to TM");
         } catch (Exception e) {
             System.err.println("WC cannot bind to some component:" + e);
@@ -928,29 +884,14 @@ public class WorkflowControllerImpl
         }
 
         try {
-            boolean b1 = rmFlights.reconnect();
-            System.out.println("flight " + b1);
-            boolean b2 = rmRooms.reconnect();
-            System.out.println("room " + b2);
-            boolean b3 = rmCars.reconnect();
-            System.out.println("car " + b3);
-            boolean b4 = rmCustomers.reconnect();
-            System.out.println("customer " + b4);
-
-            if (b1 && b2 && b3 && b4) {
+            if (rmFlights.reconnect() && rmRooms.reconnect() &&
+                    rmCars.reconnect() && rmCustomers.reconnect()) {
                 return true;
             }
-//            if (rmFlights.reconnect() && rmRooms.reconnect() &&
-//                    rmCars.reconnect() && rmCustomers.reconnect()) {
-//                return true;
-//            }
         } catch (Exception e) {
             System.err.println("Some RM cannot reconnect:" + e);
             return false;
         }
-
-
-        System.err.println("here");
 
         return false;
     }
@@ -997,7 +938,7 @@ public class WorkflowControllerImpl
         return true;
     }
 
-    public boolean dieRMIWhen(String who, String time) {
+    private boolean dieRMIWhen(String who, String time) {
         ResourceManager resourceManager = null;
 
         switch (who) {
@@ -1057,30 +998,15 @@ public class WorkflowControllerImpl
     }
 
     public static void main(String[] args) {
-        System.setSecurityManager(new RMISecurityManager());
+        System.setSecurityManager(new SecurityManager());
 
         String rmiPort = System.getProperty("rmiPort");
-
-        // InetAddress inetAddress = InetAddress.getByName("localhost");
-
-//        try {
-//            RMIServerSocketFactory ssf = port -> new ServerSocket(port, 0, java.net.InetAddress.getLocalHost());
-//            RMIClientSocketFactory csf = Socket::new;
-//            LocateRegistry.createRegistry(Integer.parseInt(rmiPort), csf, ssf);
-//
-////            LocateRegistry.createRegistry(Integer.parseInt(rmiPort));
-//            System.out.println("registered");
-//        } catch (Exception e) {
-//            System.out.println("Port has registered.");
-//        }
-
         rmiPort = Utils.getOriginRmiport(rmiPort);
 
         try {
             WorkflowControllerImpl obj = new WorkflowControllerImpl();
             Registry registry = LocateRegistry.getRegistry(Utils.getHostname(), 3345, Socket::new);
             registry.rebind(rmiPort + WorkflowController.RMIName, obj);
-//            Naming.rebind(rmiPort + WorkflowController.RMIName, obj);
             System.out.println("WC bound");
         } catch (Exception e) {
             System.err.println("WC not bound:" + e);

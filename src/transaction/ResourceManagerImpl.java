@@ -8,16 +8,10 @@ import transaction.exceptions.TransactionManagerUnaccessibleException;
 import transaction.models.ResourceItem;
 
 import java.io.*;
-import java.net.InetAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
-import java.rmi.Naming;
-import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.server.RMIClientSocketFactory;
-import java.rmi.server.RMIServerSocketFactory;
 import java.util.*;
 
 /**
@@ -27,27 +21,28 @@ import java.util.*;
  */
 
 public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject implements ResourceManager {
-    private final static String RM_TRANSACTION_LOG_FILENAME = "transactions.log";
+    // file to store all active transaction in RM
+    private final static String RM_TRANSACTION_LOG_FILENAME = "data/transactions.log";
 
+    // TM
     private TransactionManager tm = null;
 
+    // LM
     private LockManager lm = new LockManager();
 
     // RMs
     private String myRMIName = null; // Used to distinguish this RM from other
 
-    private HashSet xids = new HashSet();     // all transactions
+    // all active transactions in current RM
+    private HashSet xids = new HashSet();
 
-    // xid -> xidtables, xidtables: tableName -> RMTable
+    // tables: xid -> xidtables,
+    // xidtables: tableName -> RMTable
     // RMTable, each RMTable is related to a data table,
     // and each line is a contains entries with a query, update, insert or delete
     private Hashtable tables = new Hashtable();
 
     private String dieTime;
-
-    //  test usage
-    public ResourceManagerImpl() throws RemoteException {
-    }
 
     public ResourceManagerImpl(String rmiName) throws RemoteException {
         myRMIName = rmiName;
@@ -63,6 +58,8 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
             }
         }
 
+        // RM will continue ping TM to ensure TM is connected
+        // if cannot ping, then mark TM null and reconnect
         new Thread(() -> {
             while (true) {
                 try {
@@ -153,30 +150,33 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
         }
         File[] datas = dataDir.listFiles();
         //main table
-        for (int i = 0; i < datas.length; i++) {
-            if (datas[i].isDirectory()) {
-                continue;
-            }
-            if (datas[i].getName().endsWith(".log")) {
+        for (File data : datas) {
+            // escape each transaction dir
+            if (data.isDirectory()) {
                 continue;
             }
 
-            // get the four main tables: Flight, Car, Customer, Hotel
-            getTable(datas[i].getName());
+            // escape RM, WC, TM logs
+            if (data.getName().endsWith(".log")) {
+                continue;
+            }
+
+            // get the four main tables: Flight, Car, Customer, Hotel, Reservation
+            getTable(data.getName());
         }
 
         //xtable
-        for (int i = 0; i < datas.length; i++) {
-            if (!datas[i].isDirectory())
+        for (File data : datas) {
+            if (!data.isDirectory())
                 continue;
-            File[] xdatas = datas[i].listFiles();
-            int xid = Integer.parseInt(datas[i].getName());
+            File[] xdatas = data.listFiles();
+            int xid = Integer.parseInt(data.getName());
             if (!xids.contains(xid)) {
                 //this should never happen;
                 throw new RuntimeException("ERROR: UNEXPECTED XID");
             }
-            for (int j = 0; j < xdatas.length; j++) {
-                RMTable xtable = getTable(xid, xdatas[j].getName());
+            for (File xdata : xdatas) {
+                RMTable xtable = getTable(xid, xdata.getName());
                 try {
                     xtable.relockAll();
                 } catch (DeadlockException e) {
@@ -190,27 +190,21 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
         String rmiPort = System.getProperty("rmiPort");
         rmiPort = Utils.getOriginRmiport(rmiPort);
 
+        // reconnect to tm, enlist each xid with this rm
         try {
             Registry registry = LocateRegistry.getRegistry(Utils.getHostname(), 3345, Socket::new);
-            System.out.println(String.join("   ", registry.list()));
             tm = (TransactionManager) registry.lookup(rmiPort + TransactionManager.RMIName);
+
             System.out.println(myRMIName + "'s xids is Empty ? " + xids.isEmpty());
             for (Object xid1 : xids) {
                 int xid = (Integer) xid1;
-                System.out.println(myRMIName + " Re-enlist to TM with xid" + xid);
-                System.out.println("here1");
-
                 tm.ping();
-                System.out.println("here1-1");
                 tm.enlist(xid, this);
-                System.out.println("here2");
                 if (dieTime.equals("AfterEnlist"))
                     dieNow();
-                //                iter.remove();
             }
             System.out.println(myRMIName + " bound to TM");
         } catch (Exception e) {
-            System.out.println("here3");
             System.err.println(myRMIName + " enlist error:" + e);
             return false;
         }
@@ -241,6 +235,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
                 if (oin != null)
                     oin.close();
             } catch (IOException e1) {
+                e1.printStackTrace();
             }
         }
     }
@@ -260,6 +255,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
                 if (oout != null)
                     oout.close();
             } catch (IOException e1) {
+                e1.printStackTrace();
             }
         }
     }
@@ -300,7 +296,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
     }
 
     protected HashSet loadTransactionLogs() {
-        File xidLog = new File("data/transactions.log");
+        File xidLog = new File(RM_TRANSACTION_LOG_FILENAME);
         ObjectInputStream oin = null;
         try {
             oin = new ObjectInputStream(new FileInputStream(xidLog));
@@ -318,8 +314,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
     }
 
     protected boolean storeTransactionLogs(HashSet xids) {
-        File xidLog = new File("data/transactions.log");
-//        xidLog.getParentFile().mkdirs();
+        File xidLog = new File(RM_TRANSACTION_LOG_FILENAME);
         xidLog.getParentFile().mkdirs();
         ObjectOutputStream oout = null;
         try {
@@ -334,6 +329,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
                 if (oout != null)
                     oout.close();
             } catch (IOException e1) {
+                e1.printStackTrace();
             }
         }
     }
@@ -377,8 +373,8 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
         return result;
     }
 
-    public ResourceItem query(int xid, String tablename, Object key) throws DeadlockException,
-            InvalidTransactionException, RemoteException {
+    public ResourceItem query(int xid, String tablename, Object key)
+            throws DeadlockException, InvalidTransactionException, RemoteException {
         if (xid < 0) {
             throw new InvalidTransactionException(xid, "Xid must be positive.");
         }
@@ -428,8 +424,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
         Collection result = new ArrayList();
         RMTable table = getTable(xid, tablename);
         synchronized (table) {
-            for (Iterator iter = table.keySet().iterator(); iter.hasNext(); ) {
-                Object key = iter.next();
+            for (Object key : table.keySet()) {
                 ResourceItem item = table.get(key);
                 if (item != null && !item.isDeleted() && item.getIndex(indexName).equals(indexVal)) {
                     table.lock(key, LockManager.READ);
@@ -567,8 +562,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
 
         RMTable table = getTable(xid, tablename);
         synchronized (table) {
-            for (Iterator iter = table.keySet().iterator(); iter.hasNext(); ) {
-                Object key = iter.next();
+            for (Object key : table.keySet()) {
                 ResourceItem item = table.get(key);
                 if (item != null && !item.isDeleted() && item.getIndex(indexName).equals(indexVal)) {
                     table.lock(item.getKey(), LockManager.WRITE);
@@ -607,12 +601,11 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
         Hashtable xidtables = (Hashtable) tables.get(xid);
         if (xidtables != null) {
             synchronized (xidtables) {
-                for (Iterator iter = xidtables.entrySet().iterator(); iter.hasNext(); ) {
-                    Map.Entry entry = (Map.Entry) iter.next();
+                for (Object o : xidtables.entrySet()) {
+                    Map.Entry entry = (Map.Entry) o;
                     RMTable xtable = (RMTable) entry.getValue();            // in memory
                     RMTable table = getTable(xtable.getTablename());        // load from file, flight, car...
-                    for (Iterator iter2 = xtable.keySet().iterator(); iter2.hasNext(); ) {
-                        Object key = iter2.next();
+                    for (Object key : xtable.keySet()) {
                         ResourceItem item = xtable.get(key);
                         if (item.isDeleted())
                             table.remove(item);
@@ -645,8 +638,8 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
         Hashtable xidtables = (Hashtable) tables.get(xid);
         if (xidtables != null) {
             synchronized (xidtables) {
-                for (Iterator iter = xidtables.entrySet().iterator(); iter.hasNext(); ) {
-                    Map.Entry entry = (Map.Entry) iter.next();
+                for (Object o : xidtables.entrySet()) {
+                    Map.Entry entry = (Map.Entry) o;
                     new File("data/" + xid + "/" + entry.getKey()).delete();
                 }
                 new File("data/" + xid).delete();
@@ -663,7 +656,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
     }
 
     public static void main(String[] args) {
-        System.setSecurityManager(new RMISecurityManager());
+        System.setSecurityManager(new SecurityManager());
 
         String rmiName = System.getProperty("rmiName");
         if (rmiName == null || rmiName.equals("")) {
@@ -672,25 +665,12 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
         }
 
         String rmiPort = System.getProperty("rmiPort");
-
-//        try {
-//            RMIServerSocketFactory ssf = port -> new ServerSocket(port, 0, java.net.InetAddress.getLocalHost());
-//            RMIClientSocketFactory csf = Socket::new;
-//            LocateRegistry.createRegistry(Integer.parseInt(rmiPort), csf, ssf);
-//
-////            LocateRegistry.createRegistry(Integer.parseInt(rmiPort));
-//            System.out.println("registered");
-//        } catch (Exception e) {
-//            System.out.println("Port has registered.");
-//        }
-
         rmiPort = Utils.getOriginRmiport(rmiPort);
 
         try {
             ResourceManagerImpl obj = new ResourceManagerImpl(rmiName);
             Registry registry = LocateRegistry.getRegistry(Utils.getHostname(), 3345, Socket::new);
             registry.rebind(rmiPort + rmiName, obj);
-//            Naming.rebind(rmiPort + rmiName, obj);
             System.out.println(rmiName + " bound");
         } catch (Exception e) {
             System.err.println(rmiName + " not bound:" + e);
