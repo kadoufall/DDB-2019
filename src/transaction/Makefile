@@ -42,6 +42,8 @@ runclient : client
 
 clean :
 	$(RM) *.class
+	$(RM) ./exceptions/*.class
+	$(RM) ./models/*.class
 
 %.class : %.java
 	javac -classpath $(PROJECTROOT) $<

@@ -1,14 +1,11 @@
 PROJECTROOT = ..
 
-all : ConnectWC.class \
-
-
-runconnectwc : all
-	java -classpath $(PROJECTROOT) -Djava.security.policy=./security-policy test.ConnectWC
-
-
-
-
-
 clean :
+	rm -rf ./data/*
 	$(RM) *.class
+
+all :
+	javac -classpath $(PROJECTROOT) *.java
+
+test :
+	java -classpath $(PROJECTROOT)  test.Badd

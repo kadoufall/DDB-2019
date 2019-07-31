@@ -1,13 +1,15 @@
-package test.die;
+package test;
 
-import transaction.ResourceManager;
+import test.Connector;
 import transaction.WorkflowController;
-import test.ConnectWC;
 
 public class DieWC {
 
     public static void main(String[] a) {
-        WorkflowController wc = ConnectWC.connect();
+        Connector.cleanData();
+        Connector.launch("ALL");
+
+        WorkflowController wc = Connector.connectWC();
         try {
             int xid;
 

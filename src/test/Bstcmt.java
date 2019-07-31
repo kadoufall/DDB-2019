@@ -1,17 +1,19 @@
-package test.basic;
+package test;
 
-import test.ConnectWC;
+import test.Connector;
 import transaction.WorkflowController;
 
-public class Bstabt {
+public class Bstcmt {
 
     public static void main(String[] a) {
+        Connector.cleanData();
+        Connector.launch("ALL");
 
-        WorkflowController wc = ConnectWC.connect();
+        WorkflowController wc = Connector.connectWC();
         try {
             int xid;
             xid = wc.start();
-            wc.abort(xid);
+            wc.commit(xid);
         } catch (Exception e) {
             System.out.println("insert data exception " + e.getMessage());
         }

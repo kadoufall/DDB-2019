@@ -1,15 +1,16 @@
-package test.die.dieRM;
+package test;
 
+import test.Connector;
 import transaction.WorkflowController;
-import test.ConnectWC;
 
-public class DienpRM {
-
+public class DieTMBeforeCommit {
     public static void main(String[] a) {
-        WorkflowController wc = ConnectWC.connect();
+        Connector.cleanData();
+        Connector.launch("ALL");
+
+        WorkflowController wc = Connector.connectWC();
         try {
             int xid;
-
             xid = wc.start();
             wc.addFlight(xid, "347", 100, 310);
             wc.addRooms(xid, "Stanford", 200, 150);
@@ -18,13 +19,20 @@ public class DienpRM {
             wc.commit(xid);
 
             xid = wc.start();
-            //////////wc.reserveItinerary xid "John" (347) "SFO" false false
+            wc.addFlight(xid, "347", 100, 620);
             wc.addRooms(xid, "Stanford", 200, 300);
-            wc.dieNow("RMCars");
-            /////////launch RMCars
-            wc.reconnect();
+            wc.addCars(xid, "SFO", 300, 60);
+            wc.dieTMBeforeCommit();
             wc.commit(xid);
-
+            ////////// except java.rmi.RemoteException
+            ////////// launch TM
+            wc.dieNow("RMFlights");
+            /////////  launch RMFlights
+            wc.dieNow("RMRooms");
+            /////////  launch RMRooms
+            wc.dieNow("RMCars");
+            /////////  launch RMCars
+            wc.reconnect();
 
             xid = wc.start();
             wc.queryFlight(xid, "347");
@@ -35,7 +43,7 @@ public class DienpRM {
             wc.queryCarsPrice(xid, "SFO");
             wc.queryCustomerBill(xid, "John");
         } catch (Exception e) {
-            System.out.println("DienpRM exception " + e.getMessage());
+            System.out.println("DieTMBeforeCommit exception " + e.getMessage());
         }
     }
 }

@@ -1,13 +1,15 @@
-package test.die;
+package test;
 
-import transaction.ResourceManager;
+import test.Connector;
 import transaction.WorkflowController;
-import test.ConnectWC;
 
-public class DieAll {
+public class DieRM {
 	
 	public static void main(String[] a){
-		WorkflowController wc = ConnectWC.connect();
+		Connector.cleanData();
+		Connector.launch("ALL");
+
+		WorkflowController wc = Connector.connectWC();
 		 try{
 			int xid;
 
@@ -16,11 +18,17 @@ public class DieAll {
 			wc.addRooms(xid, "Stanford", 200, 150);	
 			wc.addCars(xid, "SFO", 300, 30);
 			wc.newCustomer(xid, "John");		
-			wc.commit(xid);	
-			wc.dieNow("ALL");
-			/////////// except java.rmi.RemoteException 
-                                                //////////  launch ALL		
+			wc.commit(xid);			
 			
+			xid = wc.start();	
+			//////////wc.reserveItinerary xid "John" (347) "SFO" true false
+			wc.addRooms(xid, "Stanford", 200, 300);
+			wc.dieNow("RMCars");
+			/////////launch RMCars
+			wc.reconnect();
+			wc.commit(xid);
+			/////////except transaction.exceptions.TransactionAbortedException
+
 			xid = wc.start();
 			wc.queryFlight(xid, "347");
 			wc.queryFlightPrice(xid, "347");
@@ -30,7 +38,7 @@ public class DieAll {
 			wc.queryCarsPrice(xid, "SFO");
 			wc.queryCustomerBill(xid, "John");
 		 }catch(Exception e){
-			 System.out.println("DieAll exception "+e.getMessage());
+			 System.out.println("dieRM exception "+e.getMessage());
 		 }
 	}
 }

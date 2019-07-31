@@ -1,17 +1,14 @@
-package test.basic;
 
-import java.io.FileInputStream;
-import java.rmi.Naming;
-import java.util.Properties;
-
-import test.ConnectWC;
+import test.Connector;
 
 import transaction.WorkflowController;
 
 public class Baddabtrd {
     public static void main(String[] args) {
+        Connector.cleanData();
+        Connector.launch("ALL");
 
-        WorkflowController wc = ConnectWC.connect();
+        WorkflowController wc = Connector.connectWC();
         try {
             int xid;
             xid = wc.start();
@@ -46,7 +43,7 @@ public class Baddabtrd {
 	    	  
 	    	 new Thread(){// for query
 	    	    public void run(){
-	    	    	WorkflowController wc = ConnectWC.connect();
+	    	    	WorkflowController wc = Connector.connect();
 	    			try {
 	    			   int xid2 = wc.start();
 	    			   System.out.println("Flight 347 has " +

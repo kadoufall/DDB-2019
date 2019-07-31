@@ -1,12 +1,15 @@
-package test.die.dieTM;
+package test;
 
-import test.ConnectWC;
+import test.Connector;
 import transaction.WorkflowController;
 
-public class DieTMAfterCommit {
+public class DieTM {
 	public static void main(String[] a){
+
+		Connector.cleanData();
+		Connector.launch("ALL");
 		
-		 WorkflowController wc = ConnectWC.connect();
+		 WorkflowController wc = Connector.connectWC();
 		 try{
 			int xid;
 			xid = wc.start();	                       
@@ -20,10 +23,11 @@ public class DieTMAfterCommit {
 			wc.addFlight(xid, "347", 100, 620);
 			wc.addRooms(xid, "Stanford", 200, 300);
 			wc.addCars(xid, "SFO", 300, 60);
-			wc.dieTMAfterCommit();
-			wc.commit(xid);
-			////////// except java.rmi.RemoteException
+			wc.dieNow("TM");
 			////////// launch TM
+			wc.reconnect();
+			wc.commit(xid);		                                                					/////////////////except transaction.exceptions.TransactionAbortedException
+
 			wc.dieNow("RMFlights");
 			/////////  launch RMFlights
 			wc.dieNow("RMRooms");
@@ -41,7 +45,7 @@ public class DieTMAfterCommit {
 			wc.queryCarsPrice(xid, "SFO");
 			wc.queryCustomerBill(xid, "John");	
 		 }catch(Exception e){
-			 System.out.println("DieTMBeforeCommit exception "+e.getMessage());
+			 System.out.println("DieTM exception "+e.getMessage());
 		 }
 	}
 }

@@ -1,6 +1,8 @@
+PROJECTROOT = ..
 
-clean:
-    $(RM) *.class
+
+clean :
+	$(RM) *.class
 
 
 tests : RunTests.java

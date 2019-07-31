@@ -1,11 +1,14 @@
-package test.die.dieRM;
+package test;
 
+import test.Connector;
 import transaction.WorkflowController;
-import test.ConnectWC;
 
-public class DieRMAfterEnlist {
+public class DieRMBeforePrepare {
 	public static void main(String[] a){
-		WorkflowController wc = ConnectWC.connect();
+		Connector.cleanData();
+		Connector.launch("ALL");
+
+		WorkflowController wc = Connector.connectWC();
 		 try{
 			int xid;
 
@@ -16,15 +19,15 @@ public class DieRMAfterEnlist {
 			wc.newCustomer(xid, "John");		
 			wc.commit(xid);			
 			
-			xid = wc.start();	
-			wc.dieRMAfterEnlist("RMRooms");
+			xid = wc.start();
 			wc.addFlight(xid, "347", 100, 620);
-			wc.reserveRoom(xid, "John", "Stanford");
-			///////////////except
-			///////////////launch RMRooms
-			wc.reconnect();
+			wc.addRooms(xid, "Stanford", 200, 300);	
+			wc.addCars(xid, "SFO", 300, 60);	
+			wc.dieRMBeforePrepare("RMFlights");
 			wc.commit(xid);
-			///////////////except
+			////////////////except transaction.exceptions.TransactionAbortedException
+			////////////////launch RMFlights
+			wc.reconnect();
 
 			xid = wc.start();
 			wc.queryFlight(xid, "347");
@@ -36,7 +39,7 @@ public class DieRMAfterEnlist {
 			wc.queryCustomerBill(xid, "John");		
 			
 		 }catch(Exception e){
-			 System.out.println("DieRMAfterEnlist exception "+e.getMessage());
+			 System.out.println("DieRMBeforePrepare exception "+e.getMessage());
 		 }
 	}
 }

@@ -1,11 +1,14 @@
-package test.die.dieRM;
+package test;
 
 import transaction.WorkflowController;
-import test.ConnectWC;
+import test.Connector;
 
 public class DieRMAfterPrepare {
 	public static void main(String[] a){
-		WorkflowController wc = ConnectWC.connect();
+		Connector.cleanData();
+		Connector.launch("ALL");
+
+		WorkflowController wc = Connector.connectWC();
 		 try{
 			int xid;
 
