@@ -58,7 +58,7 @@ public class Connector {
                 System.out.println(rmiNames[i] + " launched");
 
                 try {
-                    Thread.sleep(10000);
+                    Thread.sleep(5000);
                 } catch (InterruptedException e) {
                     System.err.println("Sleep interrupted.");
                     System.exit(1);

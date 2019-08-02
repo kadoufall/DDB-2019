@@ -1,7 +1,6 @@
 package test;
 
 import transaction.WorkflowController;
-import test.Connector;
 
 public class DieRMAfterPrepare {
 	public static void main(String[] a){

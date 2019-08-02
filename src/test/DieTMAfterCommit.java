@@ -70,7 +70,7 @@ public class DieTMAfterCommit {
                 System.out.println("Test fail:" + e);
             }
 		 }finally {
-            Connector.cleanUpExit();
+            Connector.cleanUpExit(0);
         }
 	}
 	private static void check(int expect, int real) {

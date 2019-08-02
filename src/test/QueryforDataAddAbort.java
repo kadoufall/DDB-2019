@@ -46,7 +46,7 @@ public class QueryforDataAddAbort {
             System.err.println("Test fail:" + e);
             //System.exit(1);
         }finally {
-            Connector.cleanUpExit();
+            Connector.cleanUpExit(0);
         }
     }
     private static void check(int expect, int real) {

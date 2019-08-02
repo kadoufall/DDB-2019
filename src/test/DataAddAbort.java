@@ -20,7 +20,6 @@ public class DataAddAbort{
             Connector.cleanUpExit(0);
         } catch (Exception e) {
             System.out.println("Test fail:" + e.getMessage());
-        } finally {
             Connector.cleanUpExit(1);
         }
     }

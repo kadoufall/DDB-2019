@@ -1,7 +1,6 @@
 package test;
 
 import transaction.WorkflowController;
-import test.Connector;
 
 public class DieRMAfterEnlist {
 	public static void main(String[] a){

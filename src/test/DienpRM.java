@@ -1,8 +1,8 @@
 package test;
 
 import transaction.WorkflowController;
-import test.Connector;
 import transaction.exceptions.TransactionAbortedException;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,7 +55,7 @@ public class DienpRM {
             check(30, r6);
             int r7 = wc.queryCustomerBill(xid, "CYLV");
             check(0, r7);
-            System.out.println("Test pass."); 
+            System.out.println("Test pass.");
         } catch (Exception e) {
             //System.out.println("Test fail:" + e.getMessage());
             if (e.getClass().getName().equals(TransactionAbortedException.class.getName())) {

@@ -1,6 +1,5 @@
 package test;
 
-import test.Connector;
 import transaction.WorkflowController;
 
 public class DieRMBeforePrepare {

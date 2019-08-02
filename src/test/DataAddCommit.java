@@ -1,6 +1,5 @@
 package test;
 
-import test.Connector;
 import transaction.WorkflowController;
 
 public class DataAddCommit {
@@ -17,11 +16,11 @@ public class DataAddCommit {
             wc.addCars(xid, "BYD", 100, 30);
             wc.newCustomer(xid, "CYLV");
             wc.commit(xid);
-            System.out.println("Test pass:" + data_addCommit.class.getName());
-        }catch (Exception e) {
+            System.out.println("Test pass:" + DataAddCommit.class.getName());
+            Connector.cleanUpExit(0);
+        } catch (Exception e) {
             System.out.println("Test fail:" + e.getMessage());
-        }finally {
-            Connector.cleanUpExit();
+            Connector.cleanUpExit(1);
         }
     }
 }
