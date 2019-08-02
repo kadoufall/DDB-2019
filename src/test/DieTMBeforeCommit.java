@@ -2,6 +2,7 @@ package test;
 
 import test.Connector;
 import transaction.WorkflowController;
+import transaction.exceptions.TransactionAbortedException;
 
 public class DieTMBeforeCommit {
     public static void main(String[] a) {
@@ -12,7 +13,11 @@ public class DieTMBeforeCommit {
         try {
             int xid;
             xid = wc.start();
-            wc.addFlight(xid, "347", 100, 310);
+            wc.addRooms(xid, "handan", 1000, 999);
+            wc.addCars(xid, "handan", 1000, 879);
+            wc.dieTMBeforeCommit();
+            wc.commit(xid);
+            /*wc.addFlight(xid, "347", 100, 310);
             wc.addRooms(xid, "Stanford", 200, 150);
             wc.addCars(xid, "SFO", 300, 30);
             wc.newCustomer(xid, "John");
@@ -26,24 +31,49 @@ public class DieTMBeforeCommit {
             wc.commit(xid);
             ////////// except java.rmi.RemoteException
             ////////// launch TM
+            Connector.launch("TM");
             wc.dieNow("RMFlights");
             /////////  launch RMFlights
+            Connector.launch("RMFlights");
             wc.dieNow("RMRooms");
             /////////  launch RMRooms
+            Connector.launch("RMRooms");
             wc.dieNow("RMCars");
             /////////  launch RMCars
+            Connector.launch("RMCars");
             wc.reconnect();
 
             xid = wc.start();
-            wc.queryFlight(xid, "347");
-            wc.queryFlightPrice(xid, "347");
-            wc.queryRooms(xid, "Stanford");
-            wc.queryRoomsPrice(xid, "Stanford");
-            wc.queryCars(xid, "SFO");
-            wc.queryCarsPrice(xid, "SFO");
-            wc.queryCustomerBill(xid, "John");
+            int r1 = wc.queryFlight(xid, "347");
+            check(100, r1);
+            int r2 = wc.queryFlightPrice(xid, "347");
+            check(310, r2);
+            int r3 = wc.queryRooms(xid, "Stanford");
+            check(200, r3);
+            int r4 = wc.queryRoomsPrice(xid, "Stanford");
+            check(150, r4);
+            int r5 = wc.queryCars(xid, "SFO");
+            check(300, r5);
+            int r6 = wc.queryCarsPrice(xid, "SFO");
+            check(30, r6);
+            int r7 = wc.queryCustomerBill(xid, "John");
+            check(0, r7);*/
+            System.out.println("Test pass.");   
         } catch (Exception e) {
-            System.out.println("DieTMBeforeCommit exception " + e.getMessage());
+            //System.out.println("Test fail:" + e.getMessage());
+            if (e.getClass().getName().equals(TransactionAbortedException.class.getName())) {
+                System.out.println("Test pass!");
+            } else {
+                System.out.println("Test fail:" + e);
+            }
+        }finally {
+            Connector.cleanUpExit();
+        }
+    }
+    private static void check(int expect, int real) {
+        if (expect != real) {
+            System.out.println(expect + " " + real);
+            System.err.println("Test fail");
         }
     }
 }
