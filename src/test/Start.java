@@ -3,7 +3,7 @@ package test;
 import test.Connector;
 import transaction.WorkflowController;
 
-public class Bstart {
+public class Start {
 
     public static void main(String[] a) {
         Connector.cleanData();
@@ -12,9 +12,9 @@ public class Bstart {
         WorkflowController wc = Connector.connectWC();
         try {
             int xid = wc.start();
-            System.out.println("Start");
+            System.out.println("Test pass.");
         } catch (Exception e) {
-            System.out.println("Bstart exception " + e.getMessage());
+            System.out.println("Test fail:" + e.getMessage());
         } finally {
             Connector.cleanUpExit();
         }
