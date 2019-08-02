@@ -3,7 +3,7 @@ package test;
 import test.Connector;
 import transaction.WorkflowController;
 
-public class query_data_addAbort {
+public class QueryforDataAddAbort {
     public static void main(String[] args) {
         Connector.cleanData();
         Connector.launch("ALL");
@@ -40,7 +40,7 @@ public class query_data_addAbort {
             int r7 = wc.queryCustomerBill(xid, "CYLV");
             check(0, r7);
             wc.commit(xid);
-            System.out.println("Test pass:" + query_data_addAbort.class.getName());
+            System.out.println("Test pass:" + QueryforDataAddAbort.class.getName());
 
         } catch (Exception e) {
             System.err.println("Test fail:" + e);
