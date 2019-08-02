@@ -11,13 +11,18 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
 public class Connector {
-    private static String rmiPort = "3345";
 
     public static void cleanData() {
         try {
-            Runtime.getRuntime().exec("rm -rf ./data/*");
+            if (Runtime.getRuntime().exec("rm -rf data/*").waitFor() != 0) {
+                System.err.println("Clear data not successful");
+            }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Cannot clear data: " + e);
+            System.exit(1);
+        } catch (InterruptedException e) {
+            System.err.println("WaitFor interrupted.");
+            System.exit(1);
         }
     }
 
@@ -38,18 +43,16 @@ public class Connector {
         for (int i = 0; i < rmiNames.length; i++) {
             if (who.equals(rmiNames[i]) || who.equals("ALL")) {
                 try {
-                    String execStr = "java -classpath .. -DrmiPort=" + rmiPort +
-                            " -DrmiName=" + rmiNames[i] +
-                            " -Djava.security.policy=./security-policy transaction." + classNames[i];
-                    Process process = Runtime.getRuntime().exec(execStr);
-
-                    printMessage(process.getInputStream());
-                    printMessage(process.getErrorStream());
-//                    int value = process.waitFor();
-//                    System.out.println(value);
+                    Runtime.getRuntime().exec(new String[]{
+                            "sh",
+                            "-c",
+                            "java -classpath .. -DrmiPort=" + System.getProperty("rmiPort") +
+                                    " -DrmiName=" + rmiNames[i] +
+                                    " -Djava.security.policy=./security-policy transaction." + classNames[i] +
+                                    " >>" + "results/" + System.getProperty("testName") + "/" + rmiNames[i] + ".log" + " 2>&1"});
                 } catch (Exception e) {
                     System.err.println("Cannot launch " + rmiNames[i] + ": " + e);
-                    cleanUpExit();
+                    cleanUpExit(1);
                 }
 
                 System.out.println(rmiNames[i] + " launched");
@@ -64,23 +67,8 @@ public class Connector {
         }
     }
 
-    private static void printMessage(final InputStream input) {
-        new Thread(() -> {
-            Reader reader = new InputStreamReader(input);
-            BufferedReader bf = new BufferedReader(reader);
-            String line;
-            try {
-
-                while ((line = bf.readLine()) != null) {
-                    System.out.println(line);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }).start();
-    }
-
     public static WorkflowController connectWC() {
+        String rmiPort = System.getProperty("rmiPort");
 
         WorkflowController wc = null;
 
@@ -88,9 +76,7 @@ public class Connector {
             Registry registry = LocateRegistry.getRegistry(Utils.getHostname(), 3345, Socket::new);
             rmiPort = Utils.getOriginRmiport(rmiPort);
 
-
             wc = (WorkflowController) registry.lookup(rmiPort + WorkflowController.RMIName);
-
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println("Cannot bind to WC: " + e.getMessage());
@@ -99,7 +85,8 @@ public class Connector {
         return wc;
     }
 
-    public static void cleanUpExit() {
+    public static void cleanUpExit(int status) {
+        String rmiPort = System.getProperty("rmiPort");
         try {
             Registry registry = LocateRegistry.getRegistry(Utils.getHostname(), 3345, Socket::new);
             rmiPort = Utils.getOriginRmiport(rmiPort);
@@ -107,7 +94,7 @@ public class Connector {
             wc.dieNow("ALL");
         } catch (Exception e) {
 //            e.printStackTrace();
-            System.exit(0);
+            System.exit(status);
         }
     }
 }

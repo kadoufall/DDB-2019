@@ -331,7 +331,7 @@ public class TransactionManagerImpl extends java.rmi.server.UnicastRemoteObject
                             findSameRMId = r;
                         }
                     } catch (Exception e) {
-                        // if some RM die, then r.getID() will case an exception
+                        // if some RM die, then r.getID() will cause an exception
                         // dieRM, dieRMAfterEnlist,
                         abort = true;
                         break;
@@ -347,7 +347,7 @@ public class TransactionManagerImpl extends java.rmi.server.UnicastRemoteObject
                         this.xidRMs.put(xid, temp);
                         this.storeToFile(TM_TRANSACTION_RMs_LOG_FILENAME, this.xidRMs);
 
-                        // for dieRM, dieRMAfterEnlist, dieTM
+                        // for dieRM, dieRMAfterEnlist
                         this.xids.put(xid, TransactionManager.ABORTED);
                         this.storeToFile(TM_TRANSACTION_LOG_FILENAME, this.xids);
                     } else {

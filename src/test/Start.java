@@ -1,6 +1,5 @@
 package test;
 
-import test.Connector;
 import transaction.WorkflowController;
 
 public class Start {
@@ -16,7 +15,7 @@ public class Start {
         } catch (Exception e) {
             System.out.println("Test fail:" + e.getMessage());
         } finally {
-            Connector.cleanUpExit();
+            Connector.cleanUpExit(0);
         }
     }
 }

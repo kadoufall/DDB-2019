@@ -125,11 +125,11 @@ make runregistry &
 窗口二（进行测试）
 ```bash
 cd src/test.part2
-mkdir results
 mkdir data
+mkdir results
 
-rm results/* -rf
-rm data/* -rf
+rm -rf results/*
+rm -rf data/*
 export CLASSPATH=.:gnujaxp.jar
 javac RunTests.java
 java -DrmiPort=3345 RunTests MASTER.xml
@@ -159,6 +159,9 @@ make runregistry &
 窗口二（进行测试）
 ```bash
 cd src/test
+mkdir data
+mkdir results
+
 make clean
 make all
 

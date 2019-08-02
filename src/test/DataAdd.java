@@ -17,11 +17,11 @@ public class DataAdd{
             wc.newCustomer(xid, "CYLV");
             wc.commit(xid);
 
-            System.out.println("Test pass.");
+            System.out.println("Test pass");
+            Connector.cleanUpExit(0);
         } catch (Exception e) {
-            System.out.println("Test fail:" +e.getMessage());
-        } finally {
-            Connector.cleanUpExit();
+            System.out.println("Test fail:" + e.getMessage());
+            Connector.cleanUpExit(1);
         }
     }
 }
