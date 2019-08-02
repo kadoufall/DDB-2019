@@ -10,13 +10,15 @@ public class StartAbort{
         Connector.launch("ALL");
 
         WorkflowController wc = Connector.connectWC();
-        try {
+        try{
             int xid;
             xid = wc.start();
             wc.abort(xid);
             System.out.println("Test pass.");
-        } catch (Exception e) {
+        }catch (Exception e) {
             System.out.println("Test fail:" + e.getMessage());
+        }finally {
+            Connector.cleanUpExit();
         }
     }
 }
