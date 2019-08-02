@@ -2,7 +2,7 @@ package test;
 
 import transaction.WorkflowController;
 
-public class data_Add{
+public class DataAdd{
 
     public static void main(String[] a) {
         Connector.cleanData();
