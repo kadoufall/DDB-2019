@@ -1,6 +1,5 @@
 package test;
 
-import test.Connector;
 import transaction.WorkflowController;
 import transaction.exceptions.TransactionAbortedException;
 
@@ -77,6 +76,7 @@ public class DieTMAfterCommit {
         if (expect != real) {
             System.out.println(expect + " " + real);
             System.err.println("Test fail");
+			Connector.cleanUpExit(1);
         }
     }
 }

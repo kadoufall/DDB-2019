@@ -66,7 +66,7 @@ public class DienpRM {
             //System.out.println("Test fail:"+e.getMessage());
             //The transaction 1 aborted:commit prepare
         }finally {
-            Connector.cleanUpExit();
+            Connector.cleanUpExit(0);
         }
     }
     private static void check(int expect, int real) {

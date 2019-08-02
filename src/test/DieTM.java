@@ -47,13 +47,13 @@ public class DieTM {
             int r1 = wc.queryFlight(xid, "MU5377");
             check(100, r1);
             int r2 = wc.queryFlightPrice(xid, "MU5377");
-            check(310, r2);
+            check(500, r2);
             int r3 = wc.queryRooms(xid, "shanghai");
-            check(200, r3);
+            check(300, r3);
             int r4 = wc.queryRoomsPrice(xid, "shanghai");
-            check(150, r4);
+            check(350, r4);
             int r5 = wc.queryCars(xid, "BYD");
-            check(300, r5);
+            check(100, r5);
             int r6 = wc.queryCarsPrice(xid, "BYD");
             check(30, r6);
             int r7 = wc.queryCustomerBill(xid, "CYLV");
@@ -70,6 +70,7 @@ public class DieTM {
         if (expect != real) {
             System.out.println(expect + " " + real);
             System.err.println("Test fail");
+            Connector.cleanUpExit(1);
         }
     }
 }

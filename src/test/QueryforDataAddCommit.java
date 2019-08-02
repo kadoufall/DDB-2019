@@ -1,9 +1,8 @@
 package test;
 
-import test.Connector;
 import transaction.WorkflowController;
 
-public class QueryforDataAddCommit{
+public class QueryforDataAddCommit {
 
     public static void main(String[] a) {
         Connector.cleanData();
@@ -46,10 +45,11 @@ public class QueryforDataAddCommit{
 
             wc.commit(xid);
             System.out.println("Test pass:" + QueryforDataAddCommit.class.getName());
-        }catch (Exception e) {
+
+            Connector.cleanUpExit(0);
+        } catch (Exception e) {
             System.out.println("Test fail:" + e.getMessage());
-        }finally {
-            Connector.cleanUpExit();
+            Connector.cleanUpExit(1);
         }
     }
 
@@ -57,6 +57,7 @@ public class QueryforDataAddCommit{
         if (expect != real) {
             System.out.println(expect + " " + real);
             System.err.println("Test fail");
+            Connector.cleanUpExit(1);
         }
     }
 

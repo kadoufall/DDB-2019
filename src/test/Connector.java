@@ -14,11 +14,11 @@ public class Connector {
 
     public static void cleanData() {
         try {
-            if (Runtime.getRuntime().exec("rm -rf data/*").waitFor() != 0) {
-                System.err.println("Clear data not successful");
+            if (Runtime.getRuntime().exec("rm -rf data").waitFor() != 0) {
+                System.err.println("Clean data not successful");
             }
         } catch (IOException e) {
-            System.err.println("Cannot clear data: " + e);
+            System.err.println("Cannot clean data: " + e);
             System.exit(1);
         } catch (InterruptedException e) {
             System.err.println("WaitFor interrupted.");

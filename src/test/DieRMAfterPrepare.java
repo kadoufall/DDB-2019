@@ -35,10 +35,12 @@ public class DieRMAfterPrepare {
 			wc.queryRoomsPrice(xid, "Stanford");
 			wc.queryCars(xid, "SFO");
 			wc.queryCarsPrice(xid, "SFO");
-			wc.queryCustomerBill(xid, "John");		
-			
+			wc.queryCustomerBill(xid, "John");
+
+			 Connector.cleanUpExit(0);
 		 }catch(Exception e){
 			 System.out.println("DieRMAfterPrepare exception "+e.getMessage());
+			 Connector.cleanUpExit(1);
 		 }
 	}
 }

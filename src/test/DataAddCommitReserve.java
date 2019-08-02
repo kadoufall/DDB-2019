@@ -3,7 +3,7 @@ package test;
 import test.Connector;
 import transaction.WorkflowController;
 
-public class DataAddCommitReserve{
+public class DataAddCommitReserve {
 
     public static void main(String[] a) {
         Connector.cleanData();
@@ -28,10 +28,10 @@ public class DataAddCommitReserve{
             wc.reserveCar(xid, "CYLV", "BYD");
             wc.commit(xid);
             System.out.println("Test pass.");
+            Connector.cleanUpExit(0);
         } catch (Exception e) {
             System.out.println("Test fail:" + e.getMessage());
-        }finally {
-            Connector.cleanUpExit();
+            Connector.cleanUpExit(1);
         }
     }
 }

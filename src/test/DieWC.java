@@ -1,10 +1,10 @@
 package test;
 
-import test.Connector;
 import transaction.WorkflowController;
+import transaction.exceptions.TransactionAbortedException;
+
 import java.util.ArrayList;
 import java.util.List;
-import transaction.exceptions.TransactionAbortedException;
 
 
 public class DieWC {
@@ -60,13 +60,14 @@ public class DieWC {
             }
             //System.out.println("Test fail:" + e.getMessage());
         }finally {
-            Connector.cleanUpExit();
+            Connector.cleanUpExit(0);
         }
     }
     private static void check(int expect, int real) {
         if (expect != real) {
             System.out.println(expect + " " + real);
             System.err.println("Test fail");
+            Connector.cleanUpExit(1);
         }
     }
 }

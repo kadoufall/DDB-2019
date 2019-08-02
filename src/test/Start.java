@@ -12,10 +12,10 @@ public class Start {
         try {
             int xid = wc.start();
             System.out.println("Test pass.");
+            Connector.cleanUpExit(0);
         } catch (Exception e) {
             System.out.println("Test fail:" + e.getMessage());
-        } finally {
-            Connector.cleanUpExit(0);
+            Connector.cleanUpExit(1);
         }
     }
 }
