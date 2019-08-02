@@ -3,7 +3,7 @@ package test;
 import test.Connector;
 import transaction.WorkflowController;
 
-public class Bstabt {
+public class StartAbort{
 
     public static void main(String[] a) {
         Connector.cleanData();
@@ -14,8 +14,9 @@ public class Bstabt {
             int xid;
             xid = wc.start();
             wc.abort(xid);
+            System.out.println("Test pass.");
         } catch (Exception e) {
-            System.out.println("insert data exception " + e.getMessage());
+            System.out.println("Test fail:" + e.getMessage());
         }
     }
 }
