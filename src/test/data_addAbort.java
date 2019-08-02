@@ -3,7 +3,7 @@ package test;
 import test.Connector;
 import transaction.WorkflowController;
 
-public class data_addabort {
+public class data_addAbort {
 
     public static void main(String[] a) {
         Connector.cleanData();
