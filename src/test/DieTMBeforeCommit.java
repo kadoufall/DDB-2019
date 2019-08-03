@@ -2,6 +2,7 @@ package test;
 
 import transaction.WorkflowController;
 import transaction.exceptions.TransactionAbortedException;
+import java.rmi.RemoteException;
 
 public class DieTMBeforeCommit {
     public static void main(String[] a) {
@@ -12,11 +13,16 @@ public class DieTMBeforeCommit {
         try {
             int xid;
             xid = wc.start();
-            wc.addRooms(xid, "handan", 1000, 999);
+            /*wc.addRooms(xid, "handan", 1000, 999);
             wc.addCars(xid, "handan", 1000, 879);
             wc.dieTMBeforeCommit();
-            wc.commit(xid);
-            /*wc.addFlight(xid, "347", 100, 310);
+            //wc.commit(xid);
+            try {
+                wc.commit(xid);
+            } catch (RemoteException e) {
+                // e.printStackTrace();
+            }*/
+            wc.addFlight(xid, "347", 100, 310);
             wc.addRooms(xid, "Stanford", 200, 150);
             wc.addCars(xid, "SFO", 300, 30);
             wc.newCustomer(xid, "John");
@@ -27,7 +33,12 @@ public class DieTMBeforeCommit {
             wc.addRooms(xid, "Stanford", 200, 300);
             wc.addCars(xid, "SFO", 300, 60);
             wc.dieTMBeforeCommit();
-            wc.commit(xid);
+            //wc.commit(xid);
+            try {
+                wc.commit(xid);
+            } catch (RemoteException e) {
+                // e.printStackTrace();
+            }
             ////////// except java.rmi.RemoteException
             ////////// launch TM
             Connector.launch("TM");
@@ -56,17 +67,19 @@ public class DieTMBeforeCommit {
             int r6 = wc.queryCarsPrice(xid, "SFO");
             check(30, r6);
             int r7 = wc.queryCustomerBill(xid, "John");
-            check(0, r7);*/
-            System.out.println("Test pass.");   
+            check(0, r7);
+            wc.commit(xid);
+            //System.out.println("Test pass.");   
+            Connector.cleanUpExit(0);
         } catch (Exception e) {
             //System.out.println("Test fail:" + e.getMessage());
-            if (e.getClass().getName().equals(TransactionAbortedException.class.getName())) {
+            /*if (e.getClass().getName().equals(TransactionAbortedException.class.getName())) {
                 System.out.println("Test pass!");
             } else {
                 System.out.println("Test fail:" + e);
-            }
-        }finally {
-            Connector.cleanUpExit(0);
+            }*/
+            System.out.println("DieTMBeforeCommit exception "+e.getMessage());
+            Connector.cleanUpExit(1);
         }
     }
     private static void check(int expect, int real) {
