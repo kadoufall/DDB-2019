@@ -2,7 +2,7 @@ package test;
 
 import transaction.WorkflowController;
 import transaction.exceptions.TransactionAbortedException;
-
+import java.rmi.RemoteException;
 
 public class DieTMAfterCommit {
 	public static void main(String[] a){
@@ -13,13 +13,13 @@ public class DieTMAfterCommit {
 		 WorkflowController wc = Connector.connectWC();
 		 try{
 			int xid;
-			xid = wc.start();	 
-			xid = wc.start();			
+			/*xid = wc.start();	 		
 			wc.deleteRooms(xid, "handan", 100);
 			wc.deleteCars(xid, "handan", 300);
 			wc.dieTMAfterCommit();
-			wc.commit(xid);                      
-			/*wc.addFlight(xid, "347", 100, 310);
+			wc.commit(xid);  */     
+			xid = wc.start();               
+			wc.addFlight(xid, "347", 100, 310);
 			wc.addRooms(xid, "Stanford", 200, 150);
 			wc.addCars(xid, "SFO", 300, 30);
 			wc.newCustomer(xid, "John");
@@ -30,10 +30,14 @@ public class DieTMAfterCommit {
 			wc.addRooms(xid, "Stanford", 200, 300);
 			wc.addCars(xid, "SFO", 300, 60);
 			wc.dieTMAfterCommit();
-			wc.commit(xid);
+			
+			try {
+                wc.commit(xid);
+            } catch (RemoteException e) {
+                // e.printStackTrace();
+            }
 			////////// except java.rmi.RemoteException
-			////////// launch TM
-			Connector.launch("TM");
+			/*Connector.launch("TM");
 			wc.dieNow("RMFlights");
 			/////////  launch RMFlights
 			Connector.launch("RMFlights");
@@ -59,24 +63,22 @@ public class DieTMAfterCommit {
 			int r6 = wc.queryCarsPrice(xid, "SFO");
 			check(60, r6);
 			int r7 = wc.queryCustomerBill(xid, "John");
-			check(0, r7);*/
-			System.out.println("Test pass.");		
-		 }catch(Exception e){
-			//System.out.println("Test fail:"+e.getMessage());
-			if (e.getClass().getName().equals(TransactionAbortedException.class.getName())) {
-                System.out.println("Test pass!");
-            } else {
-                System.out.println("Test fail:" + e);
-            }
-		 }finally {
-            Connector.cleanUpExit(0);
+			check(0, r7);
+			wc.commit(xid);
+			//System.out.println("Test pass.");	*/	
+			Connector.cleanUpExit(0);
+
+		 }catch (Exception e) {
+            System.out.println("DieTMAfterCommit exception "+e.getMessage());
+            Connector.cleanUpExit(1);
         }
-	}
-	private static void check(int expect, int real) {
+    }
+
+    private static void check(int expect, int real) {
         if (expect != real) {
             System.out.println(expect + " " + real);
             System.err.println("Test fail");
-			Connector.cleanUpExit(1);
+            Connector.cleanUpExit(1);
         }
     }
 }
