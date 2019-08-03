@@ -1,0 +1,14 @@
+1
+1 call start
+1 return 
+1 call dieBeforeAbort "RMRooms"
+1 return true
+1 call dieBeforeAbort "RMCars"
+1 return true
+1 call addRooms xid "shanghai" 100 200
+1 return true
+1 call addCars xid "BYD" 500 40
+1 return true
+1 call abort xid
+1 return
+1 exit
