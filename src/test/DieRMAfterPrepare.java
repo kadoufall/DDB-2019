@@ -27,7 +27,7 @@ public class DieRMAfterPrepare {
 			//wc.commit(xid);
 			try {
                 wc.commit(xid);
-            } catch (Exception e) {
+            } catch (TransactionAbortedException e) {
                 // e.printStackTrace();
             }
 			////////////////except transaction.exceptions.TransactionAbortedException
