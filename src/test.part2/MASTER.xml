@@ -161,7 +161,7 @@
     <!--Custom tests-->
 
     <test id="AddDelete" fpoints='0'>
-        basic delet
+        basic delete
     </test>
 
     <test id="AddChange" fpoints='0'>
