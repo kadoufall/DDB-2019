@@ -7,24 +7,24 @@
 1 return true
 1 call newCustomer xid "Jenny"
 1 return true
-1 call addRooms xid "Stanford" 100 310
+1 call addRooms xid "SHANGHAI" 200 350
 1 return true
-1 call queryRooms xid "Stanford"
-1 return 100
+1 call queryRooms xid "SHANGHAI"
+1 return 200
 1 call commit xid
 1 return true
 1 call start
 1 return
-1 call reserveRoom xid "John" "Stanford"
+1 call reserveRoom xid "John" "SHANGHAI"
 1 return true
-1 call reserveRoom xid "Danny" "Stanford"
+1 call reserveRoom xid "Danny" "SHANGHAI"
 1 return true
-1 call reserveRoom xid "Jenny" "Stanford"
+1 call reserveRoom xid "Jenny" "SHANGHAI"
 1 return true
 1 call commit xid
 1 return true
 1 call start
 1 return
-1 call queryRooms xid "Stanford"
-1 return 97
+1 call queryRooms xid "SHANGHAI"
+1 return 197
 1 exit
