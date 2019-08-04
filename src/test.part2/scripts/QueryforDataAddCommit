@@ -13,7 +13,7 @@
 1 return true
 1 call start
 1 return
-1 call queryFlight xid "MU537"
+1 call queryFlight xid "MU5377"
 1 return 100
 1 call queryFlightPrice xid "MU5377"
 1 return 500
