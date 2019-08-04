@@ -1,0 +1,18 @@
+1
+1 call start
+1 return 
+1 call addFlight xid "MU5377" 100 500
+1 return true
+1 call addRooms xid "SHANGHAI" 300 350
+1 return true 
+1 call addCars xid "BYD" 100 30
+1 return true
+1 call newCustomer xid "CYLV"
+1 return true
+1 call addFlight xid "MU5377" 100 420
+1 return true
+1 call addRooms xid "SHANGHAI" 200 300
+1 return true 
+1 call addCars xid "BYD" 300 60
+1 return true
+1 exit
