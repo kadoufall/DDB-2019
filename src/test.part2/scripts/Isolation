@@ -1,26 +1,26 @@
 2
 1 call start
 1 return
-1 call addFlight xid "347" 100 310
+1 call addFlight xid "MU5377" 100 500
 1 return true
 1 call commit xid
 1 return true
 1 call start
 1 return
-1 call addFlight xid "347" 100 450
+1 call addFlight xid "MU5377" 100 450
 1 return true
 2 call start
 2 return
-2 call addFlight xid "347" 200 300
+2 call addFlight xid "MU5377" 200 300
 2 except transaction.exceptions.TransactionAbortedException
-1 call queryFlight xid "347"
+1 call queryFlight xid "MU5377"
 1 return 200
 1 call commit xid
 1 return true
 2 call start
 2 return
-2 call addFlight xid "347" 400 3000
+2 call addFlight xid "MU5377" 400 3000
 2 return true
-2 call queryFlight xid "347"
+2 call queryFlight xid "MU5377"
 2 return 600
 2 exit
