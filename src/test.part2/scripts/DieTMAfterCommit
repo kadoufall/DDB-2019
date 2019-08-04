@@ -1,7 +1,7 @@
 1
 1 call start
 1 return
-1 call addFlight xid "MU537" 100 500
+1 call addFlight xid "MU5377" 100 500
 1 return true
 1 call addRooms xid "SHANGHAI" 300 350
 1 return true
