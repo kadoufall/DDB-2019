@@ -15,7 +15,7 @@
 1 return true
 1 call start
 1 return
-1 call reserveItinerary xid "CYLV" (347,3471) "SHANGHAI" false true
+1 call reserveItinerary xid "CYLV" (MU5377,MU5374) "SHANGHAI" false true
 1 return true
 1 call abort xid
 1 return
