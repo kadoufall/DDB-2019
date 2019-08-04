@@ -1,6 +1,6 @@
 1
 1 call start
 1 return
-1 call addFlight 7123894 "MU5377" 100 500
+1 call addFlight 123456 "MU5377" 100 500
 1 except transaction.exceptions.InvalidTransactionException
 1 exit
