@@ -1,0 +1,24 @@
+1
+1 call start
+1 return
+1 call addRooms xid "SHANGHAI" 300 350
+1 return true
+1 call addCars xid "BYD" 100 30
+1 return true
+1 call commit xid
+1 return true
+1 call start
+1 return
+1 call deleteRooms xid "SHANGHAI" 10
+1 return true
+1 call deleteCars xid "BYD" 10
+1 return true
+1 call commit xid
+1 return true
+1 call start
+1 return
+1 call queryRooms xid "SHANGHAI"
+1 return 290
+1 call queryCars xid "BYD"
+1 return 90
+1 exit
