@@ -3,7 +3,7 @@
 1 return
 1 call addFlight xid "MU5377" 100 500
 1 return true
-1 call addRooms xid "SHANGHAI" 300 350
+1 call addRooms xid "BYD" 300 350
 1 return true
 1 call addCars xid "BYD" 100 30
 1 return true
@@ -26,9 +26,9 @@
 1 return 99
 1 call queryFlightPrice xid "MU5377"
 1 return 500
-1 call queryRooms xid "SHANGHAI"
+1 call queryRooms xid "BYD"
 1 return 299
-1 call queryRoomsPrice xid "SHANGHAI"
+1 call queryRoomsPrice xid "BYD"
 1 return 350
 1 call queryCars xid "BYD"
 1 return 99
