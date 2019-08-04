@@ -19,11 +19,11 @@
 1 call queryFlight xid "MU5377"
 1 return 100
 1 call queryFlightPrice xid "MU5377"
-1 return 310
+1 return 500
 1 call queryRooms xid "SHANGHAI"
-1 return 200
+1 return 300
 1 call queryRoomsPrice xid "SHANGHAI"
-1 return 150
+1 return 350
 1 call queryCars xid "BYD"
 1 return 300
 1 call queryCarsPrice xid "BYD"
