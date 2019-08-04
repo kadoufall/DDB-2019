@@ -34,7 +34,7 @@
 1 return 500  
 1 call queryRooms xid "SHANGHAI"
 1 return 300
-1 call queryRoomsPrice xid "SHANGAHI"
+1 call queryRoomsPrice xid "SHANGHAI"
 1 return 350
 1 call queryCars xid "BYD"
 1 return 100
