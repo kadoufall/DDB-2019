@@ -1,0 +1,45 @@
+1
+1 call start
+1 return
+1 call addFlight xid "MU5377" 100 500
+1 return true
+1 call addRooms xid "SHANGHAI" 300 350
+1 return true
+1 call addCars xid "BYD" 100 30
+1 return true
+1 call newCustomer xid "CYLV"
+1 return true
+1 call commit xid
+1 return true
+1 call start
+1 return
+1 call addFlight xid "MU5377" 100 520
+1 return true
+1 call addRooms xid "SHANGHAI" 200 300
+1 return true
+1 call addCars xid "BYD" 100 50
+1 return true
+1 call dieRMBeforePrepare "RMFlights"
+1 return true
+1 call commit xid
+1 except transaction.exceptions.TransactionAbortedException
+1 launch RMFlights
+1 call reconnect
+1 return true
+1 call start
+1 return
+1 call queryFlight xid "MU5377"
+1 return 100
+1 call queryFlightPrice xid "MU5377"
+1 return 500
+1 call queryRooms xid "SHANGHAI"
+1 return 300
+1 call queryRoomsPrice xid "SHANGHAI"
+1 return 350
+1 call queryCars xid "BYD"
+1 return 100
+1 call queryCarsPrice xid "BYD"
+1 return 30
+1 call queryCustomerBill xid "CYLV"
+1 return 0
+1 exit
