@@ -18,7 +18,7 @@ public class DieRMBeforeCommit {
 			wc.dieRMBeforeCommit("RMRooms");
 			wc.dieRMBeforeCommit("RMCars");
 			wc.addRooms(xid, "Shanghai", 1000, 999);
-			wc.addCars(xid, "Shanghai", 1000, 879);			
+			wc.addCars(xid, "BYD", 1000, 879);			
 			wc.commit(xid);				
 			/*wc.addFlight(xid, "347", 100, 310);
 			wc.addRooms(xid, "Stanford", 200, 150);	
