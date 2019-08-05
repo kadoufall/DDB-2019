@@ -17,24 +17,18 @@ public class Consistency{
             wc.newCustomer(xid, "John");
             wc.newCustomer(xid, "Danny");
             wc.newCustomer(xid, "Jenny");
-
             wc.addRooms(xid, "SHANGHAI", 200, 350);
             int r1 = wc.queryRooms(xid, "SHANGHAI");
             check(200, r1);
             wc.commit(xid);
-
             xid = wc.start();
             wc.reserveRoom(xid, "John", "SHANGHAI");
             wc.reserveRoom(xid, "Danny", "SHANGHAI");
             wc.reserveRoom(xid, "Jenny", "SHANGHAI");
             wc.commit(xid);
-
             xid = wc.start();
             int r2 = wc.queryRooms(xid, "SHANGHAI");
             check(197, r2);
-            
-            
-            
             System.out.println("Test pass.");
             Connector.cleanUpExit(0);
         } catch (Exception e) {
