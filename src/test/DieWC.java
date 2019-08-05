@@ -37,6 +37,7 @@ public class DieWC {
             /////////except java.rmi.RemoteException
             /////////launch WC
             Connector.launch("WC");
+            wc = Connector.connectWC();
             wc.commit(xid);
 
 
