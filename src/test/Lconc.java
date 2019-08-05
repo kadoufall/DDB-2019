@@ -11,33 +11,33 @@ public class Lconc {
         try {
             int xid1 = wc.start();
             int xid2 = wc.start();
-            wc.addFlight(xid1, "347", 100, 310);
+            wc.addFlight(xid1, "MU5377", 100, 500);
 
-            wc.addRooms(xid2, "Stanford", 200, 150);
+            wc.addRooms(xid2, "SHANGHAI", 300, 350);
 
-            wc.addCars(xid1, "SFO", 300, 30);
+            wc.addCars(xid1, "BYD", 100, 30);
 
             wc.commit(xid2);
 
             wc.commit(xid1);
 
             int xid3 = wc.start();
-            int ret1 = wc.queryFlight(xid3, "347");
+            int ret1 = wc.queryFlight(xid3, "MU5377");
             check(100, ret1, "queryFlight");
 
-            int ret2 = wc.queryFlightPrice(xid3, "347");
-            check(310, ret2, "queryFlightPrice");
+            int ret2 = wc.queryFlightPrice(xid3, "MU5377");
+            check(500, ret2, "queryFlightPrice");
 
-            int ret3 = wc.queryRooms(xid3, "Stanford");
-            check(200, ret3, "queryRooms");
+            int ret3 = wc.queryRooms(xid3, "SHANGHAI");
+            check(300, ret3, "queryRooms");
 
-            int ret4 = wc.queryRoomsPrice(xid3, "Stanford");
-            check(150, ret4, "queryRoomsPrice");
+            int ret4 = wc.queryRoomsPrice(xid3, "SHANGHAI");
+            check(350, ret4, "queryRoomsPrice");
 
-            int ret5 = wc.queryCars(xid3, "SFO");
-            check(300, ret5, "queryCars");
+            int ret5 = wc.queryCars(xid3, "BYD");
+            check(100, ret5, "queryCars");
 
-            int ret6 = wc.queryCarsPrice(xid3, "SFO");
+            int ret6 = wc.queryCarsPrice(xid3, "BYD");
             check(30, ret6, "queryCarsPrice");
 
             Connector.cleanUpExit(0);
