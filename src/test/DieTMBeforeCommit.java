@@ -1,5 +1,6 @@
 package test;
 
+import test.Connector;
 import transaction.WorkflowController;
 import transaction.exceptions.TransactionAbortedException;
 import java.rmi.RemoteException;
@@ -13,25 +14,17 @@ public class DieTMBeforeCommit {
         try {
             int xid;
             xid = wc.start();
-            /*wc.addRooms(xid, "handan", 1000, 999);
-            wc.addCars(xid, "handan", 1000, 879);
-            wc.dieTMBeforeCommit();
-            //wc.commit(xid);
-            try {
-                wc.commit(xid);
-            } catch (RemoteException e) {
-                // e.printStackTrace();
-            }*/
-            wc.addFlight(xid, "347", 100, 310);
-            wc.addRooms(xid, "Stanford", 200, 150);
-            wc.addCars(xid, "SFO", 300, 30);
-            wc.newCustomer(xid, "John");
+          
+            wc.addFlight(xid, "MU5377", 100, 500);
+            wc.addRooms(xid, "SHANGHAI", 300, 350);
+            wc.addCars(xid, "BYD", 100, 30);
+            wc.newCustomer(xid, "CYLV");
             wc.commit(xid);
 
             xid = wc.start();
-            wc.addFlight(xid, "347", 100, 620);
-            wc.addRooms(xid, "Stanford", 200, 300);
-            wc.addCars(xid, "SFO", 300, 60);
+            wc.addFlight(xid, "MU5377", 100, 520);
+            wc.addRooms(xid, "SHANGHAI", 200, 300);
+            wc.addCars(xid, "BYD", 100, 60);
             wc.dieTMBeforeCommit();
             //wc.commit(xid);
             try {
@@ -54,22 +47,22 @@ public class DieTMBeforeCommit {
             wc.reconnect();
 
             xid = wc.start();
-            int r1 = wc.queryFlight(xid, "347");
+            int r1 = wc.queryFlight(xid, "MU5377");
             check(100, r1);
-            int r2 = wc.queryFlightPrice(xid, "347");
-            check(310, r2);
-            int r3 = wc.queryRooms(xid, "Stanford");
-            check(200, r3);
-            int r4 = wc.queryRoomsPrice(xid, "Stanford");
-            check(150, r4);
-            int r5 = wc.queryCars(xid, "SFO");
-            check(300, r5);
-            int r6 = wc.queryCarsPrice(xid, "SFO");
+            int r2 = wc.queryFlightPrice(xid, "MU5377");
+            check(500, r2);
+            int r3 = wc.queryRooms(xid, "SHANGHAI");
+            check(300, r3);
+            int r4 = wc.queryRoomsPrice(xid, "SHANGHAI");
+            check(350, r4);
+            int r5 = wc.queryCars(xid, "BYD");
+            check(100, r5);
+            int r6 = wc.queryCarsPrice(xid, "BYD");
             check(30, r6);
-            int r7 = wc.queryCustomerBill(xid, "John");
+            int r7 = wc.queryCustomerBill(xid, "CYLV");
             check(0, r7);
             wc.commit(xid);
-            //System.out.println("Test pass.");   
+            System.out.println("Test pass.");   
             Connector.cleanUpExit(0);
         } catch (Exception e) {
             //System.out.println("Test fail:" + e.getMessage());
