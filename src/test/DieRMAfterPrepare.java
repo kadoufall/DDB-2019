@@ -13,16 +13,16 @@ public class DieRMAfterPrepare {
 			int xid;
 
 			xid = wc.start();			
-			wc.addFlight(xid, "347", 100, 310);
-			wc.addRooms(xid, "Stanford", 200, 150);	
-			wc.addCars(xid, "SFO", 300, 30);
-			wc.newCustomer(xid, "John");		
+			wc.addFlight(xid, "MU5377", 100, 500);
+            wc.addRooms(xid, "HANDAN", 300, 350);
+            wc.addCars(xid, "BYD", 100, 30);
+            wc.newCustomer(xid, "CYLV");		
 			wc.commit(xid);			
 			
 			xid = wc.start();
-			wc.addFlight(xid, "347", 100, 620);
-			wc.addRooms(xid, "Stanford", 200, 300);	
-			wc.addCars(xid, "SFO", 300, 60);	
+			wc.addFlight(xid, "MU5377", 100, 520);
+			wc.addRooms(xid, "HANDAN", 200, 300);	
+			wc.addCars(xid, "BYD", 300, 60);	
 			wc.dieRMAfterPrepare("RMFlights");
 			//wc.commit(xid);
 			try {
@@ -36,26 +36,26 @@ public class DieRMAfterPrepare {
 			wc.reconnect();
 
 			xid = wc.start();
-			int r1 = wc.queryFlight(xid, "347");
-            check(100, r1, "queryFlight");
+			int ret1 = wc.queryFlight(xid, "MU5377");
+            check(100, ret1, "queryFlight");
 
-            int r2 = wc.queryFlightPrice(xid, "347");
-            check(310, r2, "queryFlightPrice");
+            int ret2 = wc.queryFlightPrice(xid, "MU5377");
+            check(500, ret2, "queryFlightPrice");
 
-            int r3 = wc.queryRooms(xid, "Stanford");
-            check(200, r3, "queryRooms");
+            int ret3 = wc.queryRooms(xid, "HANDAN");
+            check(300, ret3, "queryRooms");
 
-            int r4 = wc.queryRoomsPrice(xid, "Stanford");
-            check(150, r4, "queryRoomsPrice");
+            int ret4 = wc.queryRoomsPrice(xid, "HANDAN");
+            check(350, ret4, "queryRoomsPrice");
 
-            int r5 = wc.queryCars(xid, "SFO");
-            check(300, r5, "queryCars");
+            int ret5 = wc.queryCars(xid, "BYD");
+            check(100, ret5, "queryCars");
 
-            int r6 = wc.queryCarsPrice(xid, "SFO");
-            check(30, r6, "queryCarsPrice");
+            int ret6 = wc.queryCarsPrice(xid, "BYD");
+            check(30, ret6, "queryCarsPrice");
 
-            int r7 = wc.queryCustomerBill(xid, "John");
-            check(0, r7, "queryCustomerBill");
+            int ret7 = wc.queryCustomerBill(xid, "CYLV");
+            check(0, ret7, "queryCustomerBill");
             wc.commit(xid);
 
 			Connector.cleanUpExit(0);
