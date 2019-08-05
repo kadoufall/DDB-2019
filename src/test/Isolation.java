@@ -1,9 +1,7 @@
 package test;
 
-import test.Connector;
 import transaction.WorkflowController;
 import transaction.exceptions.TransactionAbortedException;
-import java.rmi.RemoteException;
 
 public class Isolation{
 
@@ -33,21 +31,21 @@ public class Isolation{
 
             xid2 = wc.start();
             wc.addFlight(xid2, "MU5377", 400, 3000);
-            int r2 = wc.queryRooms(xid2, "MU5377");
+            int r2 = wc.queryFlight(xid2, "MU5377");
             check(600, r2);
             wc.commit(xid2);
             
             System.out.println("Test pass.");
             Connector.cleanUpExit(0);
         } catch (Exception e) {
-            System.out.println("Test fail:" + e.getMessage());
+            System.err.println("Test fail:" + e.getMessage());
             Connector.cleanUpExit(1);
         }
     }
 
     private static void check(int expect, int real) {
         if (expect != real) {
-            System.out.println(expect + " " + real);
+            System.err.println(expect + " " + real);
             System.err.println("Test fail");
             Connector.cleanUpExit(1);
         }

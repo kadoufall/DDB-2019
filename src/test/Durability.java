@@ -1,8 +1,8 @@
 package test;
 
-import test.Connector;
 import transaction.WorkflowController;
 import transaction.exceptions.TransactionAbortedException;
+
 import java.rmi.RemoteException;
 
 public class Durability{
@@ -25,17 +25,24 @@ public class Durability{
             }
 
             Connector.launch("TM");
-            //wc.reconnect();
+
+            wc.reconnect();
+
             int r1 = wc.queryFlight(xid, "MU5377");
             check(100, r1);
             int r2 = wc.queryRooms(xid, "HANDAN");
             check(300, r2);
-            wc.commit(xid);
-            
+
+            try {
+                wc.commit(xid);
+            } catch (TransactionAbortedException e) {
+                // e.printStackTrace();
+            }
+
             System.out.println("Test pass.");
             Connector.cleanUpExit(0);
         } catch (Exception e) {
-            System.out.println("Test fail:" + e.getMessage());
+            System.err.println("Test fail:" + e.getMessage());
             Connector.cleanUpExit(1);
         }
     }

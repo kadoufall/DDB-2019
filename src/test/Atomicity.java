@@ -1,11 +1,11 @@
 package test;
 
-import test.Connector;
 import transaction.WorkflowController;
 import transaction.exceptions.TransactionAbortedException;
+
 import java.rmi.RemoteException;
 
-public class Atomicity{
+public class Atomicity {
 
     public static void main(String[] a) {
         Connector.cleanData();
@@ -22,24 +22,26 @@ public class Atomicity{
                 wc.commit(xid);
             } catch (RemoteException e) {
                 // e.printStackTrace();
-                /*if (e.getClass().getName().equals(RemoteException.class.getName())) {
-                    System.out.println("Test pass!");
-                } else {
-                    System.out.println("Test fail:" + e);
-                }*/
             }
-            
+
             Connector.launch("TM");
-            
+
+            wc.reconnect();
+
             //xid = wc.start();
             int r1 = wc.queryFlight(xid, "MU5377");
             check(-1, r1);
-            wc.commit(xid);
-            
+
+            try {
+                wc.commit(xid);
+            } catch (TransactionAbortedException e) {
+                // e.printStackTrace();
+            }
+
             System.out.println("Test pass.");
             Connector.cleanUpExit(0);
         } catch (Exception e) {
-            System.out.println("Test fail:" + e.getMessage());
+            System.err.println("Test fail:" + e.getMessage());
             Connector.cleanUpExit(1);
         }
     }
