@@ -19,16 +19,16 @@ public class DieTMAfterCommit {
 			wc.dieTMAfterCommit();
 			wc.commit(xid);  */     
 			xid = wc.start();               
-			wc.addFlight(xid, "347", 100, 310);
-			wc.addRooms(xid, "Stanford", 200, 150);
-			wc.addCars(xid, "SFO", 300, 30);
-			wc.newCustomer(xid, "John");
+			wc.addFlight(xid, "MU5377", 100, 500);
+			wc.addRooms(xid, "SHANGHAI", 300, 350);
+			wc.addCars(xid, "BYD", 100, 30);
+			wc.newCustomer(xid, "CYLV");
 			wc.commit(xid);	
 			
 			xid = wc.start();
-			wc.addFlight(xid, "347", 100, 620);
-			wc.addRooms(xid, "Stanford", 200, 300);
-			wc.addCars(xid, "SFO", 300, 60);
+			wc.addFlight(xid, "MU5377", 100, 520);
+			wc.addRooms(xid, "SHANGHAI", 200, 300);
+			wc.addCars(xid, "BYD", 100, 60);
 			wc.dieTMAfterCommit();
 			
 			try {
