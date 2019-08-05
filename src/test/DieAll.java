@@ -13,10 +13,10 @@ public class DieAll {
         WorkflowController wc = Connector.connectWC();
         try {
             int xid = wc.start();
-            wc.addFlight(xid, "347", 100, 310);
-            wc.addRooms(xid, "Stanford", 200, 150);
-            wc.addCars(xid, "SFO", 300, 30);
-            wc.newCustomer(xid, "John");
+            wc.addFlight(xid, "MU5377", 100, 500);
+            wc.addRooms(xid, "HANDAN", 300, 350);
+            wc.addCars(xid, "BYD", 100, 30);
+            wc.newCustomer(xid, "CYLV");
             wc.commit(xid);
 
             try {
@@ -29,25 +29,25 @@ public class DieAll {
             wc = Connector.connectWC();
 
             xid = wc.start();
-            int ret1 = wc.queryFlight(xid, "347");
+            int ret1 = wc.queryFlight(xid, "MU5377");
             check(100, ret1, "queryFlight");
 
-            int ret2 = wc.queryFlightPrice(xid, "347");
-            check(310, ret2, "queryFlightPrice");
+            int ret2 = wc.queryFlightPrice(xid, "MU5377");
+            check(500, ret2, "queryFlightPrice");
 
-            int ret3 = wc.queryRooms(xid, "Stanford");
-            check(200, ret3, "queryRooms");
+            int ret3 = wc.queryRooms(xid, "HANDAN");
+            check(300, ret3, "queryRooms");
 
-            int ret4 = wc.queryRoomsPrice(xid, "Stanford");
-            check(150, ret4, "queryRoomsPrice");
+            int ret4 = wc.queryRoomsPrice(xid, "HANDAN");
+            check(350, ret4, "queryRoomsPrice");
 
-            int ret5 = wc.queryCars(xid, "SFO");
-            check(300, ret5, "queryCars");
+            int ret5 = wc.queryCars(xid, "BYD");
+            check(100, ret5, "queryCars");
 
-            int ret6 = wc.queryCarsPrice(xid, "SFO");
+            int ret6 = wc.queryCarsPrice(xid, "BYD");
             check(30, ret6, "queryCarsPrice");
 
-            int ret7 = wc.queryCustomerBill(xid, "John");
+            int ret7 = wc.queryCustomerBill(xid, "CYLV");
             check(0, ret7, "queryCustomerBill");
 
             wc.commit(xid);
