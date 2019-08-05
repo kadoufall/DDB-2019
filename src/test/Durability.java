@@ -23,22 +23,17 @@ public class Durability{
             } catch (RemoteException e) {
                 // e.printStackTrace();
             }
-
             Connector.launch("TM");
-
             wc.reconnect();
-
             int r1 = wc.queryFlight(xid, "MU5377");
             check(100, r1);
             int r2 = wc.queryRooms(xid, "HANDAN");
             check(300, r2);
-
             try {
                 wc.commit(xid);
             } catch (TransactionAbortedException e) {
                 // e.printStackTrace();
             }
-
             System.out.println("Test pass.");
             Connector.cleanUpExit(0);
         } catch (Exception e) {
