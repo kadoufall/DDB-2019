@@ -1,5 +1,5 @@
 # 分布式数据库课程实践 DDB-Project2019
-## 分布式旅游预定系统 Distributed Travel Reservation System 
+## 分布式旅游预订系统 Distributed Travel Reservation System 
 
 ## 环境
 > Ubuntu
